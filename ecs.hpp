@@ -37,7 +37,7 @@ inline constexpr auto __are_all_classes<T, Ts...> =
 
 template <typename Subset, typename Set> constexpr bool __is_subset_of = false;
 template <typename... Ts, typename... Us>
-constexpr bool __is_subset_of<std::tuple<Ts...>, std::tuple<Us...>> =
+inline constexpr bool __is_subset_of<std::tuple<Ts...>, std::tuple<Us...>> =
     (__is_any_of<Ts, Us...> && ...);
 
 using entity_id = std::size_t;
