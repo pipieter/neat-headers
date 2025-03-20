@@ -101,15 +101,12 @@ public:
 
 template <typename... RegisteredComponents> class ecs {
 private:
-  std::tuple<__componentlist<RegisteredComponents>...> _components;
-  std::vector<bool> _entities;
-
   template <typename RequestedComponent>
   __componentlist<RequestedComponent> &get_components_list() {
     static_assert(__is_any_of<RequestedComponent, RegisteredComponents...>,
                   "Requested component type is not registered.");
     return std::get<__get_index<RequestedComponent, RegisteredComponents...>()>(
-        _components);
+        components._components);
   }
 
   template <typename... RequestedComponents>
@@ -119,8 +116,8 @@ private:
                        std::tuple<RegisteredComponents...>>,
         "At least one of the requested component types is not registered.");
     std::vector<entity_id> found_entities;
-    for (entity_id entity = 0; entity < _entities.size(); entity++) {
-      if (!_entities[entity])
+    for (entity_id entity = 0; entity < entities._entities.size(); entity++) {
+      if (!entities._entities[entity])
         continue;
 
       bool any_not = false;
@@ -163,18 +160,19 @@ public:
   private:
     friend class ecs;
     ecs &_ecs;
+    std::vector<bool> _entities;
     explicit __entities(ecs &e) : _ecs(e){};
 
   public:
     entity_id create() {
-      for (entity_id entity = 0; entity < _ecs._entities.size(); entity++) {
-        if (!_ecs._entities[entity]) {
-          _ecs._entities[entity] = true;
+      for (entity_id entity = 0; entity < _entities.size(); entity++) {
+        if (!_entities[entity]) {
+          _entities[entity] = true;
           return entity;
         }
       }
-      entity_id entity = _ecs._entities.size();
-      _ecs._entities.push_back(true);
+      entity_id entity = _entities.size();
+      _entities.push_back(true);
       return entity;
     }
 
@@ -182,14 +180,14 @@ public:
       if (!exists(entity))
         return false;
       std::apply([entity](auto &&...comp) { ((comp.remove(entity)), ...); },
-                 _ecs._components);
+                 _ecs.components._components);
     }
 
     bool exists(entity_id entity) const {
-      if (entity >= _ecs._entities.size()) {
+      if (entity >= _ecs.entities._entities.size()) {
         return false;
       }
-      return _ecs._entities[entity];
+      return _ecs.entities._entities[entity];
     }
   } entities;
 
@@ -197,6 +195,8 @@ public:
   private:
     friend class ecs;
     ecs &_ecs;
+    std::tuple<__componentlist<RegisteredComponents>...> _components;
+
     explicit __components(ecs &e) : _ecs(e){};
 
   public:
