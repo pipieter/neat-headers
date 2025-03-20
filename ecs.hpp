@@ -94,10 +94,44 @@ private:
   std::tuple<__componentlist<Cs>...> _components;
   std::vector<bool> _entities;
 
-  template <typename T> __componentlist<T> &get_components() {
+  template <typename T> __componentlist<T> &get_components_list() {
     static_assert(__is_any_of<T, Cs...>,
                   "Component type is not a registered type.");
     return std::get<__get_index<T, Cs...>()>(_components);
+  }
+
+  template <typename... Ts>
+  std::vector<entity_id> get_entities_with_components() {
+    std::vector<entity_id> entities;
+    for (entity_id entity = 0; entity < _entities.size(); entity++) {
+      if (!_entities[entity])
+        continue;
+
+      bool any_not = false;
+      (
+          [this, entity, &any_not]<Ts> {
+            if (!this->get_components_list<Ts>().has(entity)) {
+              any_not = true;
+            }
+          }(),
+          ...);
+      if (!any_not) {
+        entities.push_back(entity);
+      }
+    }
+    return entities;
+  }
+
+  template <typename T> T *get_unchecked_component(entity_id entity) {
+    return get_components_list<T>().get(entity);
+  }
+
+  template <typename... Ts>
+  std::tuple<entity_id, Ts *...>
+  get_entity_unchecked_components(entity_id entity) {
+    std::tuple<entity_id, Ts *...> result{
+        entity, get_unchecked_component<Ts>(entity)...};
+    return result;
   }
 
 public:
@@ -154,7 +188,7 @@ public:
                     "Component type is not a registered type.");
       if (!_ecs.entities.exists(entity))
         return nullptr;
-      return _ecs.get_components<T>().get(entity);
+      return _ecs.get_components_list<T>().get(entity);
     }
 
     template <typename T, typename... Args>
@@ -163,12 +197,11 @@ public:
                     "Component type is not a registered type.");
       if (!_ecs.entities.exists(entity))
         return nullptr;
-      return _ecs.get_components<T>().add(entity, args...);
+      return _ecs.get_components_list<T>().add(entity, args...);
     }
 
-    template <typename T>
-    bool has(entity_id entity) const {
-      return _ecs.get_components<T>().has(entity);
+    template <typename T> bool has(entity_id entity) const {
+      return _ecs.get_components_list<T>().has(entity);
     }
 
     template <typename T> bool remove(entity_id entity) {
@@ -176,12 +209,22 @@ public:
                     "Component type is not a registered type.");
       if (!_ecs.entities.exists(entity))
         return false;
-      return _ecs.get_components<T>().remove(entity);
+      return _ecs.get_components_list<T>().remove(entity);
     }
 
   } components;
-};
 
+  template <typename... Ts>
+  std::vector<std::tuple<entity_id, Ts *...>> iterate() {
+    std::vector<entity_id> entities = get_entities_with_components<Ts...>();
+    std::vector<std::tuple<entity_id, Ts *...>> results;
+
+    for (entity_id entity : entities) {
+      results.push_back(get_entity_unchecked_components<Ts...>(entity));
+    }
+    return results;
+  }
+};
 }; // namespace ecs
 
 #endif // ECS_HPP_

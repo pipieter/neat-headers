@@ -78,19 +78,13 @@ int main() {
     BeginMode3D(camera);
 
     // Rotation system
-    for (ecs::entity_id entity : {entity1, entity2, entity3, entity4}) {
-      if (ecs.components.has<Rotation>(entity)) {
-        Cube *cube = ecs.components.get<Cube>(entity);
-        cube->rotation += 90.0 * GetFrameTime();
-      }
+    for (auto [entity, cube, _] : ecs.iterate<Cube, Rotation>()) {
+      cube->rotation += 90.0 * GetFrameTime();
     }
 
     // Translation system
-    for (ecs::entity_id entity : {entity1, entity2, entity3, entity4}) {
-      if (ecs.components.has<Translation>(entity)) {
-        Cube *cube = ecs.components.get<Cube>(entity);
-        cube->position.y = std::sin(GetTime());
-      }
+    for (auto [entity, cube, _] : ecs.iterate<Cube, Translation>()) {
+      cube->position.y = std::sin(GetTime());
     }
 
     DrawGrid(10, 1.0f);
