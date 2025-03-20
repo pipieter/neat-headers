@@ -102,7 +102,7 @@ public:
 template <typename... RegisteredComponents> class ecs {
 private:
   template <typename RequestedComponent>
-  __componentlist<RequestedComponent> &get_components_list() {
+  __componentlist<RequestedComponent> &_get_components_list() {
     static_assert(__is_any_of<RequestedComponent, RegisteredComponents...>,
                   "Requested component type is not registered.");
     return std::get<__get_index<RequestedComponent, RegisteredComponents...>()>(
@@ -110,7 +110,7 @@ private:
   }
 
   template <typename... RequestedComponents>
-  std::vector<entity_id> get_entities_with_components() {
+  std::vector<entity_id> _get_entities_who_have_components() {
     static_assert(
         __is_subset_of<std::tuple<RequestedComponents...>,
                        std::tuple<RegisteredComponents...>>,
@@ -123,7 +123,8 @@ private:
       bool any_not = false;
       (
           [this, entity, &any_not]<RequestedComponents> {
-            if (!this->get_components_list<RequestedComponents>().has(entity)) {
+            if (!this->_get_components_list<RequestedComponents>().has(
+                    entity)) {
               any_not = true;
             }
           }(),
@@ -135,40 +136,18 @@ private:
     return found_entities;
   }
 
-  template <typename T> T *get_unchecked_component(entity_id entity) {
-    return get_components_list<T>().get(entity);
-  }
-
   template <typename... Ts>
   std::tuple<entity_id, Ts *...>
-  get_entity_unchecked_components(entity_id entity) {
+  _get_entity_components_with_entity(entity_id entity) {
     std::tuple<entity_id, Ts *...> result{
-        entity, get_unchecked_component<Ts>(entity)...};
+        entity, _get_components_list<Ts>().get(entity)...};
     return result;
   }
 
   template <typename... Ts>
-  std::tuple<Ts *...> get_unchecked_components(entity_id entity) {
-    std::tuple<Ts *...> result{get_unchecked_component<Ts>(entity)...};
+  std::tuple<Ts *...> _get_entity_components_without_entity(entity_id entity) {
+    std::tuple<Ts *...> result{_get_components_list<Ts>().get(entity)...};
     return result;
-  }
-
-  template <typename... RequestedComponents>
-  std::vector<std::tuple<RequestedComponents *...>> iterate_without_entity() {
-    static_assert(
-        __is_subset_of<std::tuple<RequestedComponents...>,
-                       std::tuple<RegisteredComponents...>>,
-        "At least one of the requested components is not registered.");
-    std::vector<entity_id> valid_entities =
-        get_entities_with_components<RequestedComponents...>();
-    std::vector<std::tuple<RequestedComponents *...>> results;
-    results.reserve(valid_entities.size());
-
-    for (entity_id entity : valid_entities) {
-      results.push_back(
-        get_unchecked_components<RequestedComponents...>(entity));
-    }
-    return results;
   }
 
 public:
@@ -230,7 +209,7 @@ public:
                     "Requested component type is not registered.");
       if (!_ecs.entities.exists(entity))
         return nullptr;
-      return _ecs.get_components_list<RequestedComponent>().get(entity);
+      return _ecs._get_components_list<RequestedComponent>().get(entity);
     }
 
     template <typename RequestedComponent, typename... Args>
@@ -239,14 +218,14 @@ public:
                     "Requested component type is not registered.");
       if (!_ecs.entities.exists(entity))
         return nullptr;
-      return _ecs.get_components_list<RequestedComponent>().add(entity,
-                                                                args...);
+      return _ecs._get_components_list<RequestedComponent>().add(entity,
+                                                                 args...);
     }
 
     template <typename RequestedComponent> bool has(entity_id entity) const {
       static_assert(__is_any_of<RequestedComponent, RegisteredComponents...>,
                     "Requested component type is not registered.");
-      return _ecs.get_components_list<RequestedComponent>().has(entity);
+      return _ecs._get_components_list<RequestedComponent>().has(entity);
     }
 
     template <typename RequestedComponent> bool remove(entity_id entity) {
@@ -254,14 +233,14 @@ public:
                     "Requested component type is not registered.");
       if (!_ecs.entities.exists(entity))
         return false;
-      return _ecs.get_components_list<RequestedComponent>().remove(entity);
+      return _ecs._get_components_list<RequestedComponent>().remove(entity);
     }
 
     template <typename RequestedComponent>
     std::tuple<entity_id, RequestedComponent *> first() {
       static_assert(__is_any_of<RequestedComponent, RegisteredComponents...>,
                     "Requested component type is not registered.");
-      return _ecs.get_components_list<RequestedComponent>().first();
+      return _ecs._get_components_list<RequestedComponent>().first();
     }
 
   } components;
@@ -282,7 +261,7 @@ public:
 
     template <typename... FuncComponents>
     void execute(void (&system)(FuncComponents *...)) {
-      for (auto data : _ecs.iterate_without_entity<FuncComponents...>()) {
+      for (auto data : _ecs.iterate_components<FuncComponents...>()) {
         std::apply(system, data);
       }
     }
@@ -295,13 +274,32 @@ public:
                        std::tuple<RegisteredComponents...>>,
         "At least one of the requested components is not registered.");
     std::vector<entity_id> valid_entities =
-        get_entities_with_components<RequestedComponents...>();
+        _get_entities_who_have_components<RequestedComponents...>();
     std::vector<std::tuple<entity_id, RequestedComponents *...>> results;
     results.reserve(valid_entities.size());
 
     for (entity_id entity : valid_entities) {
       results.push_back(
-          get_entity_unchecked_components<RequestedComponents...>(entity));
+          _get_entity_components_with_entity<RequestedComponents...>(entity));
+    }
+    return results;
+  }
+
+  template <typename... RequestedComponents>
+  std::vector<std::tuple<RequestedComponents *...>> iterate_components() {
+    static_assert(
+        __is_subset_of<std::tuple<RequestedComponents...>,
+                       std::tuple<RegisteredComponents...>>,
+        "At least one of the requested components is not registered.");
+    std::vector<entity_id> valid_entities =
+        _get_entities_who_have_components<RequestedComponents...>();
+    std::vector<std::tuple<RequestedComponents *...>> results;
+    results.reserve(valid_entities.size());
+
+    for (entity_id entity : valid_entities) {
+      results.push_back(
+          _get_entity_components_without_entity<RequestedComponents...>(
+              entity));
     }
     return results;
   }
