@@ -101,7 +101,7 @@ private:
   }
 
 public:
-  ecs() : components(*this), entities(*this) {
+  ecs() : entities(*this), components(*this) {
     static_assert(__are_unique_types<Cs...>,
                   "ECS expects all types to be unique.");
     static_assert(__are_all_classes<Cs...>,
