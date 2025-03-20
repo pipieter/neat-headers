@@ -1,7 +1,7 @@
 #ifndef ECS_HPP_
 #define ECS_HPP_
 
-#include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <tuple>
 #include <type_traits>
@@ -41,6 +41,7 @@ constexpr bool __is_subset_of<std::tuple<Ts...>, std::tuple<Us...>> =
     (__is_any_of<Ts, Us...> && ...);
 
 using entity_id = std::size_t;
+const entity_id invalid_entity = SIZE_MAX;
 
 template <typename ComponentType> class __componentlist {
 private:
@@ -86,6 +87,15 @@ public:
       return false;
     _tags[entity] = false;
     return true;
+  }
+
+  std::tuple<entity_id, ComponentType *> first() {
+    for (entity_id entity = 0; entity < _tags.size(); entity++) {
+      if (_tags[entity]) {
+        return {entity, &_components[entity]};
+      }
+    }
+    return {invalid_entity, nullptr};
   }
 };
 
@@ -209,8 +219,10 @@ public:
                                                                 args...);
     }
 
-    template <typename T> bool has(entity_id entity) const {
-      return _ecs.get_components_list<T>().has(entity);
+    template <typename RequestedComponent> bool has(entity_id entity) const {
+      static_assert(__is_any_of<RequestedComponent, RegisteredComponents...>,
+                    "Requested component type is not registered.");
+      return _ecs.get_components_list<RequestedComponent>().has(entity);
     }
 
     template <typename RequestedComponent> bool remove(entity_id entity) {
@@ -219,6 +231,13 @@ public:
       if (!_ecs.entities.exists(entity))
         return false;
       return _ecs.get_components_list<RequestedComponent>().remove(entity);
+    }
+
+    template <typename RequestedComponent>
+    std::tuple<entity_id, RequestedComponent *> first() {
+      static_assert(__is_any_of<RequestedComponent, RegisteredComponents...>,
+                    "Requested component type is not registered.");
+      return _ecs.get_components_list<RequestedComponent>().first();
     }
 
   } components;
