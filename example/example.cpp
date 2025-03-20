@@ -100,6 +100,7 @@ int main() {
     }
 
     EndMode3D();
+    DrawFPS(10, 10);
     EndDrawing();
   }
 
