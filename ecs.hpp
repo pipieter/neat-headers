@@ -147,8 +147,32 @@ private:
     return result;
   }
 
+  template <typename... Ts>
+  std::tuple<Ts *...> get_unchecked_components(entity_id entity) {
+    std::tuple<Ts *...> result{get_unchecked_component<Ts>(entity)...};
+    return result;
+  }
+
+  template <typename... RequestedComponents>
+  std::vector<std::tuple<RequestedComponents *...>> iterate_without_entity() {
+    static_assert(
+        __is_subset_of<std::tuple<RequestedComponents...>,
+                       std::tuple<RegisteredComponents...>>,
+        "At least one of the requested components is not registered.");
+    std::vector<entity_id> valid_entities =
+        get_entities_with_components<RequestedComponents...>();
+    std::vector<std::tuple<RequestedComponents *...>> results;
+    results.reserve(valid_entities.size());
+
+    for (entity_id entity : valid_entities) {
+      results.push_back(
+        get_unchecked_components<RequestedComponents...>(entity));
+    }
+    return results;
+  }
+
 public:
-  ecs() : entities(*this), components(*this) {
+  ecs() : entities(*this), components(*this), systems(*this) {
     static_assert(__are_unique_types<RegisteredComponents...>,
                   "Not all registered component types are unique.");
     static_assert(
@@ -241,6 +265,28 @@ public:
     }
 
   } components;
+
+  struct __systems {
+  private:
+    friend class ecs;
+    ecs &_ecs;
+    explicit __systems(ecs &e) : _ecs(e){};
+
+  public:
+    template <typename... FuncComponents>
+    void execute(void (&system)(entity_id, FuncComponents *...)) {
+      for (auto data : _ecs.iterate<FuncComponents...>()) {
+        std::apply(system, data);
+      }
+    }
+
+    template <typename... FuncComponents>
+    void execute(void (&system)(FuncComponents *...)) {
+      for (auto data : _ecs.iterate_without_entity<FuncComponents...>()) {
+        std::apply(system, data);
+      }
+    }
+  } systems;
 
   template <typename... RequestedComponents>
   std::vector<std::tuple<entity_id, RequestedComponents *...>> iterate() {
