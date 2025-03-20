@@ -11,4 +11,11 @@ add_subdirectory(raylib)
 add_executable(example example.cpp)
 
 target_link_libraries(example raylib)
-target_compile_options(example PUBLIC -Wall -Wextra -Wpedantic -g)
+target_compile_options(example PUBLIC -g
+    -Wall -Wextra -pedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy 
+    -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op 
+    -Wmissing-include-dirs -Wnoexcept -Wold-style-cast -Woverloaded-virtual 
+    -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-null-sentinel 
+    -Wstrict-overflow=5 -Wundef -Wno-unused -Wno-variadic-macros 
+    -Wno-parentheses -fdiagnostics-show-option
+)
