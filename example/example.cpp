@@ -42,10 +42,10 @@ int main() {
   cube3->color = RED;
   cube4->color = YELLOW;
 
-  cube1->position = (Vector3){-2.0, 0.0, -2.0};
-  cube2->position = (Vector3){-2.0, 0.0, +2.0};
-  cube3->position = (Vector3){+2.0, 0.0, -2.0};
-  cube4->position = (Vector3){+2.0, 0.0, +2.0};
+  cube1->position = Vector3{-2.0, 0.0, -2.0};
+  cube2->position = Vector3{-2.0, 0.0, +2.0};
+  cube3->position = Vector3{+2.0, 0.0, -2.0};
+  cube4->position = Vector3{+2.0, 0.0, +2.0};
 
   cube1->size = {1.00, 1.00, 1.00};
   cube2->size = {1.50, 1.50, 1.50};
@@ -66,9 +66,9 @@ int main() {
   SetTargetFPS(60);
 
   Camera3D camera;
-  camera.position = (Vector3){8.0f, 8.0f, 8.0f};
-  camera.target = (Vector3){0.0f, 0.0f, 0.0f};
-  camera.up = (Vector3){0.0f, 1.0f, 0.0f};
+  camera.position = Vector3{8.0f, 8.0f, 8.0f};
+  camera.target = Vector3{0.0f, 0.0f, 0.0f};
+  camera.up = Vector3{0.0f, 1.0f, 0.0f};
   camera.fovy = 60.0f;
   camera.projection = CAMERA_PERSPECTIVE;
 

@@ -11,4 +11,4 @@ add_subdirectory(raylib)
 add_executable(example example.cpp)
 
 target_link_libraries(example raylib)
-target_compile_options(example PUBLIC -Wall -Wextra -g)
+target_compile_options(example PUBLIC -Wall -Wextra -Wpedantic -g)
