@@ -64,7 +64,7 @@ public:
   }
 
   template <typename... Args> T *add(entity_id entity, Args... args) {
-    static_assert(std::is_constructible_v<T, Args...>(),
+    static_assert(std::is_constructible_v<T, Args...>,
                   "Component can't be built from given arguments.");
     if (entity >= _tags.size()) {
       _tags.resize(entity + 1, false);
@@ -164,6 +164,11 @@ public:
       if (!_ecs.entities.exists(entity))
         return nullptr;
       return _ecs.get_components<T>().add(entity, args...);
+    }
+
+    template <typename T>
+    bool has(entity_id entity) const {
+      return _ecs.get_components<T>().has(entity);
     }
 
     template <typename T> bool remove(entity_id entity) {
