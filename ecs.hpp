@@ -214,6 +214,16 @@ public:
       }
       return last;
     }
+
+    std::vector<entity_id> all() const {
+      std::vector<entity_id> found_entities;
+      for (entity_id entity = 0; entity < _entities.size(); entity++) {
+        if (_entities[entity]) {
+          found_entities.push_back(entity);
+        }
+      }
+      return found_entities;
+    }
   } entities;
 
   class __components final {

@@ -137,6 +137,9 @@ int main() {
     bool exists  = ecs.entities.exists(entity);    // check if entity exists
     bool removed = ecs.entities.remove(entity);    // delete entity
 
+    ecs::entity_id last = ecs.entities.last(); // get the highest entity id
+    std::vector<ecs::entity_id> entities = ecs.entities.all(); // get all entities
+
     return 0;
 }
 ```
@@ -146,6 +149,8 @@ The `ecs.entities.remove` method returns true if the entity existed and is now r
 New entities are guaranteed to have a unique id compared to all other existing entities. The ids of removed entities can (and will) be re-used later for new entities. Entities can have a maximum value of 2^64, which should be large enough for all practical purposes.
 
 The last or highest existing entity id can be retrieved using `ecs.entities.last`. Note that the system does not guarantee that all entity ids between zero and `ecs.entities.last` are used, and there might be gaps when iterating over them. If no entities exist, `ecs.entities.last` will return zero.
+
+All existing entity ids can be found using `ecs.entities.all`.
 
 ## Components
 
