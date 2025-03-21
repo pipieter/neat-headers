@@ -281,6 +281,8 @@ int main() {
 }
 ```
 
+Similar to systems, it's heavily discouraged to create or delete components of a type while iterating over the same type, as this could cause the pointers to become invalidated, which could result in undefined behavior.
+
 # Sharing global state 
 
 The systems execute function does not allow additional parameters to be given, and will only (optionally) contain the entity id and the requested components. A way to handle this would be to create a single entity with a single component that represents shared data, and then calling a system using only that component.
