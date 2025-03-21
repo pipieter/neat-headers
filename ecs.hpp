@@ -115,7 +115,7 @@ template <typename... RegisteredComponents> class engine {
     class __entities final {
        private:
         friend class engine;
-        engine&              _ecs;
+        engine&           _ecs;
         std::vector<bool> _entities;
         explicit __entities(engine& e);
 
@@ -130,75 +130,20 @@ template <typename... RegisteredComponents> class engine {
     class __components final {
        private:
         friend class engine;
-        engine&                                                 _ecs;
+        engine&                                              _ecs;
         std::tuple<__componentlist<RegisteredComponents>...> _components;
-        explicit __components(engine& e)
-            : _ecs(e) {};
+        explicit __components(engine& e);
 
        public:
-        template <typename RequestedComponent>
-        RequestedComponent* get(entity_id entity) {
-            static_assert(
-                typing::is_one_of<RequestedComponent, RegisteredComponents...>,
-                "Requested component type is not registered.");
-            if (!_ecs.entities.exists(entity))
-                return nullptr;
-            return _ecs._get_components_list<RequestedComponent>().get(entity);
-        }
+        template <typename RequestedComponent> RequestedComponent*                   get(entity_id entity);
+        template <typename RequestedComponent, typename... Args> RequestedComponent* add(entity_id entity, Args... args);
 
-        template <typename RequestedComponent, typename... Args>
-        RequestedComponent* add(entity_id entity, Args... args) {
-            static_assert(
-                typing::is_one_of<RequestedComponent, RegisteredComponents...>,
-                "Requested component type is not registered.");
-            if (!_ecs.entities.exists(entity))
-                return nullptr;
-            return _ecs._get_components_list<RequestedComponent>().add(entity,
-                                                                       args...);
-        }
+        template <typename RequestedComponent> bool has(entity_id entity) const;
+        template <typename RequestedComponent> bool remove(entity_id entity);
+        template <typename RequestedComponent> bool allocate(size_t new_size);
+        bool                                        allocate_all(size_t new_size);
 
-        template <typename RequestedComponent> bool has(entity_id entity) const {
-            static_assert(
-                typing::is_one_of<RequestedComponent, RegisteredComponents...>,
-                "Requested component type is not registered.");
-            if (!_ecs.entities.exists(entity))
-                return false;
-            return _ecs._get_components_list<RequestedComponent>().has(entity);
-        }
-
-        template <typename RequestedComponent> bool remove(entity_id entity) {
-            static_assert(
-                typing::is_one_of<RequestedComponent, RegisteredComponents...>,
-                "Requested component type is not registered.");
-            if (!_ecs.entities.exists(entity))
-                return false;
-            return _ecs._get_components_list<RequestedComponent>().remove(entity);
-        }
-
-        template <typename RequestedComponent>
-        std::tuple<entity_id, RequestedComponent*> first() {
-            static_assert(
-                typing::is_one_of<RequestedComponent, RegisteredComponents...>,
-                "Requested component type is not registered.");
-            return _ecs._get_components_list<RequestedComponent>().first();
-        }
-
-        template <typename RequestedComponent> bool allocate(size_t new_size) {
-            static_assert(
-                typing::is_one_of<RequestedComponent, RegisteredComponents...>,
-                "Requested component type is not registered.");
-            return _ecs._get_components_list<RequestedComponent>().allocate(new_size);
-        }
-
-        bool allocate_all(size_t new_size) {
-            bool allocated = false;
-            std::apply(
-                [new_size, &allocated](auto&&... comp) {
-                    ((allocated = allocated || comp.allocate(new_size)), ...);
-                },
-                _ecs.components._components);
-            return allocated;
-        }
+        template <typename RequestedComponent> std::tuple<entity_id, RequestedComponent*> first();
     } components;
 
     struct __systems {
@@ -349,6 +294,14 @@ ecs::engine<RegisteredComponents...>::engine()
 template <typename... RegisteredComponents>
 ecs::engine<RegisteredComponents...>::engine::~engine() {}
 
+#pragma endregion ecs implementations
+
+#pragma region ecs entities implementations
+
+template <typename... RegisteredComponents>
+ecs::engine<RegisteredComponents...>::__entities::__entities(engine& e)
+    : _ecs(e) {};
+
 template <typename... RegisteredComponents>
 ecs::entity_id ecs::engine<RegisteredComponents...>::__entities::create() {
     for (entity_id entity = 0; entity < _entities.size(); entity++) {
@@ -403,10 +356,71 @@ std::vector<ecs::entity_id> ecs::engine<RegisteredComponents...>::__entities::al
     return found_entities;
 }
 
+#pragma endregion ecs entities implementations
+
+#pragma region ecs components implementations
+
 template <typename... RegisteredComponents>
-ecs::engine<RegisteredComponents...>::__entities::__entities(engine& e)
+ecs::engine<RegisteredComponents...>::__components::__components(engine& e)
     : _ecs(e) {};
 
-#pragma endregion ecs implementations
+template <typename... RegisteredComponents>
+template <typename RequestedComponent>
+RequestedComponent* ecs::engine<RegisteredComponents...>::__components::get(entity_id entity) {
+    static_assert(typing::is_one_of<RequestedComponent, RegisteredComponents...>, "Requested component type is not registered.");
+    if (!_ecs.entities.exists(entity))
+        return nullptr;
+    return _ecs._get_components_list<RequestedComponent>().get(entity);
+}
+
+template <typename... RegisteredComponents>
+template <typename RequestedComponent, typename... Args>
+RequestedComponent* ecs::engine<RegisteredComponents...>::__components::add(entity_id entity, Args... args) {
+    static_assert(typing::is_one_of<RequestedComponent, RegisteredComponents...>, "Requested component type is not registered.");
+    if (!_ecs.entities.exists(entity))
+        return nullptr;
+    return _ecs._get_components_list<RequestedComponent>().add(entity, args...);
+}
+
+template <typename... RegisteredComponents>
+template <typename RequestedComponent>
+bool ecs::engine<RegisteredComponents...>::__components::has(entity_id entity) const {
+    static_assert(typing::is_one_of<RequestedComponent, RegisteredComponents...>, "Requested component type is not registered.");
+    if (!_ecs.entities.exists(entity))
+        return false;
+    return _ecs._get_components_list<RequestedComponent>().has(entity);
+}
+
+template <typename... RegisteredComponents>
+template <typename RequestedComponent>
+bool ecs::engine<RegisteredComponents...>::__components::remove(entity_id entity) {
+    static_assert(typing::is_one_of<RequestedComponent, RegisteredComponents...>, "Requested component type is not registered.");
+    if (!_ecs.entities.exists(entity))
+        return false;
+    return _ecs._get_components_list<RequestedComponent>().remove(entity);
+}
+
+template <typename... RegisteredComponents>
+template <typename RequestedComponent>
+std::tuple<ecs::entity_id, RequestedComponent*> ecs::engine<RegisteredComponents...>::__components::first() {
+    static_assert(typing::is_one_of<RequestedComponent, RegisteredComponents...>, "Requested component type is not registered.");
+    return _ecs._get_components_list<RequestedComponent>().first();
+}
+
+template <typename... RegisteredComponents>
+template <typename RequestedComponent>
+bool ecs::engine<RegisteredComponents...>::__components::allocate(size_t new_size) {
+    static_assert(typing::is_one_of<RequestedComponent, RegisteredComponents...>, "Requested component type is not registered.");
+    return _ecs._get_components_list<RequestedComponent>().allocate(new_size);
+}
+
+template <typename... RegisteredComponents>
+bool ecs::engine<RegisteredComponents...>::__components::allocate_all(size_t new_size) {
+    bool allocated = false;
+    std::apply([new_size, &allocated](auto&&... comp) { ((allocated = allocated || comp.allocate(new_size)), ...); }, _ecs.components._components);
+    return allocated;
+}
+
+#pragma endregion ecs component implementations
 
 #endif  // ECS_HPP_
