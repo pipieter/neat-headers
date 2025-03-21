@@ -3,14 +3,14 @@
 
 #include <cmath>
 
-#include "../ecs.hpp"
+#include "../neat_ecs.hpp"
 
 struct World;
 struct Cube;
 struct Rotation;
 struct Translation;
 
-using ECS = ecs::engine<World, Cube, Rotation, Translation>;
+using ECS = neat::ecs::engine<World, Cube, Rotation, Translation>;
 
 struct World {
     ECS*  ecs;
@@ -59,13 +59,13 @@ void draw_cube_system(Cube* cube) {
 int main() {
     ECS ecs;
 
-    ecs::entity_id entityw = ecs.entities.create();
+    neat::ecs::entity_id entityw = ecs.entities.create();
     ecs.components.add<World>(entityw);
 
-    ecs::entity_id entity1 = ecs.entities.create();
-    ecs::entity_id entity2 = ecs.entities.create();
-    ecs::entity_id entity3 = ecs.entities.create();
-    ecs::entity_id entity4 = ecs.entities.create();
+    neat::ecs::entity_id entity1 = ecs.entities.create();
+    neat::ecs::entity_id entity2 = ecs.entities.create();
+    neat::ecs::entity_id entity3 = ecs.entities.create();
+    neat::ecs::entity_id entity4 = ecs.entities.create();
 
     ecs.components.add<Cube>(entity1);
     ecs.components.add<Cube>(entity2);

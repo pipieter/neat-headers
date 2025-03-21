@@ -1,5 +1,5 @@
-#ifndef ECS_HPP_
-#define ECS_HPP_
+#ifndef NEAT_ECS_HPP_
+#define NEAT_ECS_HPP_
 
 #include <cstdint>
 #include <cstdlib>
@@ -7,7 +7,7 @@
 #include <type_traits>
 #include <vector>
 
-namespace ecs {
+namespace neat::ecs {
 
 namespace typing {
 
@@ -135,21 +135,21 @@ class engine {
         template <typename... FuncComponents> void execute(void (&system)(entity_id, FuncComponents*...));
     };
 };
-};  // namespace ecs
+};  // namespace neat::ecs
 
 #pragma region componentlist implementations
 
 template <typename ComponentType>
-ecs::componentlist<ComponentType>::componentlist() {
+neat::ecs::componentlist<ComponentType>::componentlist() {
     static_assert(std::is_class_v<ComponentType>, "Component type is not a struct or class.");
     static_assert(std::is_default_constructible_v<ComponentType>, "Component type does not have a default constructor.");
 }
 
 template <typename ComponentType>
-ecs::componentlist<ComponentType>::componentlist::~componentlist() {}
+neat::ecs::componentlist<ComponentType>::componentlist::~componentlist() {}
 
 template <typename ComponentType>
-bool ecs::componentlist<ComponentType>::componentlist::has(
+bool neat::ecs::componentlist<ComponentType>::componentlist::has(
     entity_id entity) const {
     if (entity >= _tags.size())
         return false;
@@ -157,7 +157,7 @@ bool ecs::componentlist<ComponentType>::componentlist::has(
 }
 
 template <typename ComponentType>
-ComponentType* ecs::componentlist<ComponentType>::componentlist::get(entity_id entity) {
+ComponentType* neat::ecs::componentlist<ComponentType>::componentlist::get(entity_id entity) {
     if (!has(entity))
         return nullptr;
     return &_components[entity];
@@ -165,7 +165,7 @@ ComponentType* ecs::componentlist<ComponentType>::componentlist::get(entity_id e
 
 template <typename ComponentType>
 template <typename... Args>
-ComponentType* ecs::componentlist<ComponentType>::componentlist::add(ecs::entity_id entity, Args... args) {
+ComponentType* neat::ecs::componentlist<ComponentType>::componentlist::add(neat::ecs::entity_id entity, Args... args) {
     static_assert(std::is_constructible_v<ComponentType, Args...>, "Component type can't be built from given arguments.");
     if (entity >= _tags.size()) {
         _tags.resize(entity + 1, false);
@@ -178,7 +178,7 @@ ComponentType* ecs::componentlist<ComponentType>::componentlist::add(ecs::entity
 }
 
 template <typename ComponentType>
-bool ecs::componentlist<ComponentType>::componentlist::remove(entity_id entity) {
+bool neat::ecs::componentlist<ComponentType>::componentlist::remove(entity_id entity) {
     if (!has(entity))
         return false;
     _tags[entity]       = false;
@@ -187,7 +187,7 @@ bool ecs::componentlist<ComponentType>::componentlist::remove(entity_id entity) 
 }
 
 template <typename ComponentType>
-std::tuple<ecs::entity_id, ComponentType*> ecs::componentlist<ComponentType>::componentlist::first() {
+std::tuple<neat::ecs::entity_id, ComponentType*> neat::ecs::componentlist<ComponentType>::componentlist::first() {
     for (entity_id entity = 0; entity < _tags.size(); entity++) {
         if (_tags[entity]) {
             return {entity, &_components[entity]};
@@ -197,7 +197,7 @@ std::tuple<ecs::entity_id, ComponentType*> ecs::componentlist<ComponentType>::co
 }
 
 template <typename ComponentType>
-bool ecs::componentlist<ComponentType>::componentlist::allocate(
+bool neat::ecs::componentlist<ComponentType>::componentlist::allocate(
     size_t new_count) {
     if (new_count < _tags.size()) {
         return false;
@@ -212,18 +212,18 @@ bool ecs::componentlist<ComponentType>::componentlist::allocate(
 #pragma region ecs implementations
 
 template <typename... RegisteredComponents>
-ecs::engine<RegisteredComponents...>::engine()
+neat::ecs::engine<RegisteredComponents...>::engine()
     : entities(*this), components(*this), systems(*this) {
     static_assert(typing::are_unique_types<RegisteredComponents...>, "Not all registered component types are unique.");
     static_assert(typing::are_all_classes<RegisteredComponents...>, "All registered component types must be a struct or a class.");
 }
 
 template <typename... RegisteredComponents>
-ecs::engine<RegisteredComponents...>::engine::~engine() {}
+neat::ecs::engine<RegisteredComponents...>::engine::~engine() {}
 
 template <typename... RegisteredComponents>
 template <typename... RequestedComponents>
-std::vector<std::tuple<ecs::entity_id, RequestedComponents*...>> ecs::engine<RegisteredComponents...>::iterate() {
+std::vector<std::tuple<neat::ecs::entity_id, RequestedComponents*...>> neat::ecs::engine<RegisteredComponents...>::iterate() {
     static_assert(typing::is_subset_of<std::tuple<RequestedComponents...>, std::tuple<RegisteredComponents...>>, "At least one of the requested components is not registered.");
 
     std::vector<entity_id> valid_entities = _get_entities_who_have_components<RequestedComponents...>();
@@ -239,7 +239,7 @@ std::vector<std::tuple<ecs::entity_id, RequestedComponents*...>> ecs::engine<Reg
 
 template <typename... RegisteredComponents>
 template <typename... RequestedComponents>
-std::vector<std::tuple<RequestedComponents*...>> ecs::engine<RegisteredComponents...>::iterate_components() {
+std::vector<std::tuple<RequestedComponents*...>> neat::ecs::engine<RegisteredComponents...>::iterate_components() {
     static_assert(typing::is_subset_of<std::tuple<RequestedComponents...>, std::tuple<RegisteredComponents...>>, "At least one of the requested components is not registered.");
 
     std::vector<entity_id>                           valid_entities = _get_entities_who_have_components<RequestedComponents...>();
@@ -255,14 +255,14 @@ std::vector<std::tuple<RequestedComponents*...>> ecs::engine<RegisteredComponent
 
 template <typename... RegisteredComponents>
 template <typename RequestedComponent>
-ecs::componentlist<RequestedComponent>& ecs::engine<RegisteredComponents...>::_get_components_list() {
+neat::ecs::componentlist<RequestedComponent>& neat::ecs::engine<RegisteredComponents...>::_get_components_list() {
     static_assert(typing::is_one_of<RequestedComponent, RegisteredComponents...>, "Requested component type is not registered.");
     return std::get<typing::get_index<RequestedComponent, RegisteredComponents...>()>(components._components);
 }
 
 template <typename... RegisteredComponents>
 template <typename... RequestedComponents>
-std::vector<ecs::entity_id> ecs::engine<RegisteredComponents...>::_get_entities_who_have_components() {
+std::vector<neat::ecs::entity_id> neat::ecs::engine<RegisteredComponents...>::_get_entities_who_have_components() {
     static_assert(typing::is_subset_of<std::tuple<RequestedComponents...>, std::tuple<RegisteredComponents...>>, "At least one of the requested component types is not registered.");
     std::vector<entity_id> found_entities;
 
@@ -286,13 +286,13 @@ std::vector<ecs::entity_id> ecs::engine<RegisteredComponents...>::_get_entities_
 
 template <typename... RegisteredComponents>
 template <typename... RequestedComponents>
-std::tuple<ecs::entity_id, RequestedComponents*...> ecs::engine<RegisteredComponents...>::_get_entity_components_with_entity(entity_id entity) {
+std::tuple<neat::ecs::entity_id, RequestedComponents*...> neat::ecs::engine<RegisteredComponents...>::_get_entity_components_with_entity(entity_id entity) {
     return {entity, _get_components_list<RequestedComponents>().get(entity)...};
 }
 
 template <typename... RegisteredComponents>
 template <typename... RequestedComponents>
-std::tuple<RequestedComponents*...> ecs::engine<RegisteredComponents...>::_get_entity_components_without_entity(ecs::entity_id entity) {
+std::tuple<RequestedComponents*...> neat::ecs::engine<RegisteredComponents...>::_get_entity_components_without_entity(neat::ecs::entity_id entity) {
     return {_get_components_list<RequestedComponents>().get(entity)...};
 }
 
@@ -301,11 +301,11 @@ std::tuple<RequestedComponents*...> ecs::engine<RegisteredComponents...>::_get_e
 #pragma region ecs entities implementations
 
 template <typename... RegisteredComponents>
-ecs::engine<RegisteredComponents...>::entities::entities(engine& e)
+neat::ecs::engine<RegisteredComponents...>::entities::entities(engine& e)
     : _ecs(e) {};
 
 template <typename... RegisteredComponents>
-ecs::entity_id ecs::engine<RegisteredComponents...>::entities::create() {
+neat::ecs::entity_id neat::ecs::engine<RegisteredComponents...>::entities::create() {
     for (entity_id entity = 0; entity < _entities.size(); entity++) {
         if (!_entities[entity]) {
             _entities[entity] = true;
@@ -318,7 +318,7 @@ ecs::entity_id ecs::engine<RegisteredComponents...>::entities::create() {
 }
 
 template <typename... RegisteredComponents>
-bool ecs::engine<RegisteredComponents...>::entities::remove(entity_id entity) {
+bool neat::ecs::engine<RegisteredComponents...>::entities::remove(entity_id entity) {
     if (!exists(entity))
         return false;
     std::apply([entity](auto&&... comp) { ((comp.remove(entity)), ...); },
@@ -328,7 +328,7 @@ bool ecs::engine<RegisteredComponents...>::entities::remove(entity_id entity) {
 }
 
 template <typename... RegisteredComponents>
-bool ecs::engine<RegisteredComponents...>::entities::exists(
+bool neat::ecs::engine<RegisteredComponents...>::entities::exists(
     entity_id entity) const {
     if (entity >= _ecs.entities._entities.size()) {
         return false;
@@ -337,7 +337,7 @@ bool ecs::engine<RegisteredComponents...>::entities::exists(
 }
 
 template <typename... RegisteredComponents>
-ecs::entity_id ecs::engine<RegisteredComponents...>::entities::last() const {
+neat::ecs::entity_id neat::ecs::engine<RegisteredComponents...>::entities::last() const {
     entity_id last = 0;
     for (entity_id entity = 0; entity < _entities.size(); entity++) {
         if (_entities[entity]) {
@@ -348,7 +348,7 @@ ecs::entity_id ecs::engine<RegisteredComponents...>::entities::last() const {
 }
 
 template <typename... RegisteredComponents>
-std::vector<ecs::entity_id> ecs::engine<RegisteredComponents...>::entities::all() const {
+std::vector<neat::ecs::entity_id> neat::ecs::engine<RegisteredComponents...>::entities::all() const {
     std::vector<entity_id> found_entities;
     for (entity_id entity = 0; entity < _entities.size(); entity++) {
         if (_entities[entity]) {
@@ -363,12 +363,12 @@ std::vector<ecs::entity_id> ecs::engine<RegisteredComponents...>::entities::all(
 #pragma region ecs components implementations
 
 template <typename... RegisteredComponents>
-ecs::engine<RegisteredComponents...>::components::components(engine& e)
+neat::ecs::engine<RegisteredComponents...>::components::components(engine& e)
     : _ecs(e) {};
 
 template <typename... RegisteredComponents>
 template <typename RequestedComponent>
-RequestedComponent* ecs::engine<RegisteredComponents...>::components::get(entity_id entity) {
+RequestedComponent* neat::ecs::engine<RegisteredComponents...>::components::get(entity_id entity) {
     static_assert(typing::is_one_of<RequestedComponent, RegisteredComponents...>, "Requested component type is not registered.");
     if (!_ecs.entities.exists(entity))
         return nullptr;
@@ -377,7 +377,7 @@ RequestedComponent* ecs::engine<RegisteredComponents...>::components::get(entity
 
 template <typename... RegisteredComponents>
 template <typename RequestedComponent, typename... Args>
-RequestedComponent* ecs::engine<RegisteredComponents...>::components::add(entity_id entity, Args... args) {
+RequestedComponent* neat::ecs::engine<RegisteredComponents...>::components::add(entity_id entity, Args... args) {
     static_assert(typing::is_one_of<RequestedComponent, RegisteredComponents...>, "Requested component type is not registered.");
     if (!_ecs.entities.exists(entity))
         return nullptr;
@@ -386,7 +386,7 @@ RequestedComponent* ecs::engine<RegisteredComponents...>::components::add(entity
 
 template <typename... RegisteredComponents>
 template <typename RequestedComponent>
-bool ecs::engine<RegisteredComponents...>::components::has(entity_id entity) const {
+bool neat::ecs::engine<RegisteredComponents...>::components::has(entity_id entity) const {
     static_assert(typing::is_one_of<RequestedComponent, RegisteredComponents...>, "Requested component type is not registered.");
     if (!_ecs.entities.exists(entity))
         return false;
@@ -395,7 +395,7 @@ bool ecs::engine<RegisteredComponents...>::components::has(entity_id entity) con
 
 template <typename... RegisteredComponents>
 template <typename RequestedComponent>
-bool ecs::engine<RegisteredComponents...>::components::remove(entity_id entity) {
+bool neat::ecs::engine<RegisteredComponents...>::components::remove(entity_id entity) {
     static_assert(typing::is_one_of<RequestedComponent, RegisteredComponents...>, "Requested component type is not registered.");
     if (!_ecs.entities.exists(entity))
         return false;
@@ -404,20 +404,20 @@ bool ecs::engine<RegisteredComponents...>::components::remove(entity_id entity) 
 
 template <typename... RegisteredComponents>
 template <typename RequestedComponent>
-std::tuple<ecs::entity_id, RequestedComponent*> ecs::engine<RegisteredComponents...>::components::first() {
+std::tuple<neat::ecs::entity_id, RequestedComponent*> neat::ecs::engine<RegisteredComponents...>::components::first() {
     static_assert(typing::is_one_of<RequestedComponent, RegisteredComponents...>, "Requested component type is not registered.");
     return _ecs._get_components_list<RequestedComponent>().first();
 }
 
 template <typename... RegisteredComponents>
 template <typename RequestedComponent>
-bool ecs::engine<RegisteredComponents...>::components::allocate(size_t new_size) {
+bool neat::ecs::engine<RegisteredComponents...>::components::allocate(size_t new_size) {
     static_assert(typing::is_one_of<RequestedComponent, RegisteredComponents...>, "Requested component type is not registered.");
     return _ecs._get_components_list<RequestedComponent>().allocate(new_size);
 }
 
 template <typename... RegisteredComponents>
-bool ecs::engine<RegisteredComponents...>::components::allocate_all(size_t new_size) {
+bool neat::ecs::engine<RegisteredComponents...>::components::allocate_all(size_t new_size) {
     bool allocated = false;
     std::apply([new_size, &allocated](auto&&... comp) { ((allocated = allocated || comp.allocate(new_size)), ...); }, _ecs.components._components);
     return allocated;
@@ -428,12 +428,12 @@ bool ecs::engine<RegisteredComponents...>::components::allocate_all(size_t new_s
 #pragma region ecs system implementations
 
 template <typename... RegisteredComponents>
-ecs::engine<RegisteredComponents...>::systems::systems(engine& e)
+neat::ecs::engine<RegisteredComponents...>::systems::systems(engine& e)
     : _ecs(e) {};
 
 template <typename... RegisteredComponents>
 template <typename... FuncComponents>
-void ecs::engine<RegisteredComponents...>::systems::execute(void (&system)(entity_id, FuncComponents*...)) {
+void neat::ecs::engine<RegisteredComponents...>::systems::execute(void (&system)(entity_id, FuncComponents*...)) {
     for (auto data : _ecs.iterate<FuncComponents...>()) {
         std::apply(system, data);
     }
@@ -441,7 +441,7 @@ void ecs::engine<RegisteredComponents...>::systems::execute(void (&system)(entit
 
 template <typename... RegisteredComponents>
 template <typename... FuncComponents>
-void ecs::engine<RegisteredComponents...>::systems::execute(void (&system)(FuncComponents*...)) {
+void neat::ecs::engine<RegisteredComponents...>::systems::execute(void (&system)(FuncComponents*...)) {
     for (auto data : _ecs.iterate_components<FuncComponents...>()) {
         std::apply(system, data);
     }
@@ -449,4 +449,4 @@ void ecs::engine<RegisteredComponents...>::systems::execute(void (&system)(FuncC
 
 #pragma endregion ecs systems implementations
 
-#endif  // ECS_HPP_
+#endif  // NEAT_ECS_HPP_
