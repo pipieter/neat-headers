@@ -86,6 +86,7 @@ public:
     if (!has(entity))
       return false;
     _tags[entity] = false;
+    _components[entity] = ComponentType(); // Replace with a default component
     return true;
   }
 
