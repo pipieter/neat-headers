@@ -98,6 +98,15 @@ public:
     }
     return {invalid_entity, nullptr};
   }
+
+  bool allocate(size_t new_count) {
+    if (new_count < _tags.size()) {
+      return false;
+    }
+    _tags.resize(new_count, false);
+    _components.resize(new_count);
+    return true;
+  }
 };
 
 template <typename... RegisteredComponents> class ecs {
@@ -195,6 +204,16 @@ public:
       }
       return _ecs.entities._entities[entity];
     }
+
+    entity_id last() const {
+      entity_id last = 0;
+      for (entity_id entity = 0; entity < _entities.size(); entity++) {
+        if (_entities[entity]) {
+          last = entity;
+        }
+      }
+      return last;
+    }
   } entities;
 
   class __components final {
@@ -248,6 +267,21 @@ public:
       return _ecs._get_components_list<RequestedComponent>().first();
     }
 
+    template <typename RequestedComponent> bool allocate(size_t new_size) {
+      static_assert(__is_any_of<RequestedComponent, RegisteredComponents...>,
+                    "Requested component type is not registered.");
+      return _ecs._get_components_list<RequestedComponent>().allocate(new_size);
+    }
+
+    bool allocate_all(size_t new_size) {
+      bool allocated = false;
+      std::apply(
+          [new_size, &allocated](auto &&...comp) {
+            ((allocated = allocated || comp.allocate(new_size)), ...);
+          },
+          _ecs.components._components);
+      return allocated;
+    }
   } components;
 
   struct __systems {

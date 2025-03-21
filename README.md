@@ -145,6 +145,8 @@ The `ecs.entities.remove` method returns true if the entity existed and is now r
 
 New entities are guaranteed to have a unique id compared to all other existing entities. The ids of removed entities can (and will) be re-used later for new entities. Entities can have a maximum value of 2^64, which should be large enough for all practical purposes.
 
+The last or highest existing entity id can be retrieved using `ecs.entities.last`. Note that the system does not guarantee that all entity ids between zero and `ecs.entities.last` are used, and there might be gaps when iterating over them. If no entities exist, `ecs.entities.last` will return zero.
+
 ## Components
 
 Components are data objects which represent the state of an entity. An entity can have one or more different components. Components can be added, removed and queried for their existence. Additionally, the first component of a type can be queried, based on the numerical value of the entities.
@@ -283,6 +285,23 @@ int main() {
 
 Similar to systems, it's heavily discouraged to create or delete components of a type while iterating over the same type, as this could cause the pointers to become invalidated, which could result in undefined behavior.
 
+# Pre-allocating buffer sizes
+
+As mentioned before, it's discouraged to create new components while iterating over components of the same type, as the underlying array pointer might change which can invalidate the pointers. One way to mitigate this would be to preallocate the array size if the maximum amount of entities in the ECS would be known. This can be done using `ecs.components.allocate`.
+
+```C++
+#include "ecs.hpp"
+
+int main() {
+    ecs::ecs<Position> ecs;
+    ecs.components.allocate<Position>(512); // Allocates enough memory so that up to 512 (continuous) entities can have a Position
+    ecs.components.allocate_all(512);       // Applies allocate to all registered components.
+}
+```
+
+Allocate should be called at the start of creation, and will only support entity ids up to the amount of components allocated. If for example at some point an entity with id 1000 exists, but there are only 300 entities in existence after deletion, calling `ecs.components.allocate_all(500)` will not include the entities with ids 500 and beyond. If it's desired to allocate space for all entities after creation, it is recommended to use `ecs.entities.last()` as size.
+
+
 # Sharing global state 
 
 The systems execute function does not allow additional parameters to be given, and will only (optionally) contain the entity id and the requested components. A way to handle this would be to create a single entity with a single component that represents shared data, and then calling a system using only that component.
@@ -348,3 +367,4 @@ To maximize efficiency and cache-behavior, components are internally stored as a
 - Don't store pointers to components. As mentioned in the previous point, adding components might cause the existing components to be relocated to another place in memory, invalidating the previous pointers. Instead request the components again whenever you need them from the entity id.
 - Unused components are internally stored as components created with the default constructor. It's thus adviced to keep the constructors of the components as simple as possible, to prevent overhead when creating and deleting components. It is recommended to use components as simple plain-old-data objects.
 - When a component is deleted, it is internally replaced with a component created with the default constructor. This ensures that the destructor of the previous is called.
+- If a component needs to store a pointer to another component, it should instead store the entity id of the owner of the component and then be queried directly in the ECS system. Querying a component from a specific id should have minimal overhead.
