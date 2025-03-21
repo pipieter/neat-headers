@@ -40,8 +40,7 @@ void rotation_system(World *world) {
 }
 
 void translation_system(World *world) {
-  for (auto [_, cube, translation] :
-       world->ecs->iterate<Cube, Translation>()) {
+  for (auto [_, cube, translation] : world->ecs->iterate<Cube, Translation>()) {
     cube->position.y = translation->height * std::sin(world->time);
   }
 }
@@ -58,7 +57,6 @@ void draw_cube_system(Cube *cube) {
 }
 
 int main() {
-
   ECS ecs;
 
   ecs::entity_id entityw = ecs.entities.create();
