@@ -10,7 +10,7 @@ struct Cube;
 struct Rotation;
 struct Translation;
 
-using ECS = ecs::ecs<World, Cube, Rotation, Translation>;
+using ECS = ecs::engine<World, Cube, Rotation, Translation>;
 
 struct World {
     ECS*  ecs;

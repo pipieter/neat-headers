@@ -64,7 +64,7 @@ template <typename ComponentType> class __componentlist {
     std::tuple<entity_id, ComponentType*> first();
 };
 
-template <typename... RegisteredComponents> class ecs {
+template <typename... RegisteredComponents> class engine {
    private:
     template <typename RequestedComponent>
     __componentlist<RequestedComponent>& _get_components_list() {
@@ -109,15 +109,15 @@ template <typename... RegisteredComponents> class ecs {
     }
 
    public:
-    ecs();
-    ~ecs();
+    engine();
+    ~engine();
 
     class __entities final {
        private:
-        friend class ecs;
-        ecs&              _ecs;
+        friend class engine;
+        engine&              _ecs;
         std::vector<bool> _entities;
-        explicit __entities(ecs& e);
+        explicit __entities(engine& e);
 
        public:
         entity_id              create();
@@ -129,10 +129,10 @@ template <typename... RegisteredComponents> class ecs {
 
     class __components final {
        private:
-        friend class ecs;
-        ecs&                                                 _ecs;
+        friend class engine;
+        engine&                                                 _ecs;
         std::tuple<__componentlist<RegisteredComponents>...> _components;
-        explicit __components(ecs& e)
+        explicit __components(engine& e)
             : _ecs(e) {};
 
        public:
@@ -203,9 +203,9 @@ template <typename... RegisteredComponents> class ecs {
 
     struct __systems {
        private:
-        friend class ecs;
-        ecs& _ecs;
-        explicit __systems(ecs& e)
+        friend class engine;
+        engine& _ecs;
+        explicit __systems(engine& e)
             : _ecs(e) {};
 
        public:
@@ -292,7 +292,7 @@ ecs::__componentlist<ComponentType>::__componentlist::get(entity_id entity) {
 
 template <typename ComponentType>
 template <typename... Args>
-ComponentType* ecs::__componentlist<ComponentType>::__componentlist::add(::ecs::entity_id entity, Args... args) {
+ComponentType* ecs::__componentlist<ComponentType>::__componentlist::add(ecs::entity_id entity, Args... args) {
     static_assert(std::is_constructible_v<ComponentType, Args...>, "Component type can't be built from given arguments.");
     if (entity >= _tags.size()) {
         _tags.resize(entity + 1, false);
@@ -340,17 +340,17 @@ bool ecs::__componentlist<ComponentType>::__componentlist::allocate(
 #pragma region ecs implementations
 
 template <typename... RegisteredComponents>
-ecs::ecs<RegisteredComponents...>::ecs()
+ecs::engine<RegisteredComponents...>::engine()
     : entities(*this), components(*this), systems(*this) {
     static_assert(typing::are_unique_types<RegisteredComponents...>, "Not all registered component types are unique.");
     static_assert(typing::are_all_classes<RegisteredComponents...>, "All registered component types must be a struct or a class.");
 }
 
 template <typename... RegisteredComponents>
-ecs::ecs<RegisteredComponents...>::ecs::~ecs() {}
+ecs::engine<RegisteredComponents...>::engine::~engine() {}
 
 template <typename... RegisteredComponents>
-ecs::entity_id ecs::ecs<RegisteredComponents...>::__entities::create() {
+ecs::entity_id ecs::engine<RegisteredComponents...>::__entities::create() {
     for (entity_id entity = 0; entity < _entities.size(); entity++) {
         if (!_entities[entity]) {
             _entities[entity] = true;
@@ -363,7 +363,7 @@ ecs::entity_id ecs::ecs<RegisteredComponents...>::__entities::create() {
 }
 
 template <typename... RegisteredComponents>
-bool ecs::ecs<RegisteredComponents...>::__entities::remove(entity_id entity) {
+bool ecs::engine<RegisteredComponents...>::__entities::remove(entity_id entity) {
     if (!exists(entity))
         return false;
     std::apply([entity](auto&&... comp) { ((comp.remove(entity)), ...); },
@@ -373,7 +373,7 @@ bool ecs::ecs<RegisteredComponents...>::__entities::remove(entity_id entity) {
 }
 
 template <typename... RegisteredComponents>
-bool ecs::ecs<RegisteredComponents...>::__entities::exists(
+bool ecs::engine<RegisteredComponents...>::__entities::exists(
     entity_id entity) const {
     if (entity >= _ecs.entities._entities.size()) {
         return false;
@@ -382,7 +382,7 @@ bool ecs::ecs<RegisteredComponents...>::__entities::exists(
 }
 
 template <typename... RegisteredComponents>
-ecs::entity_id ecs::ecs<RegisteredComponents...>::__entities::last() const {
+ecs::entity_id ecs::engine<RegisteredComponents...>::__entities::last() const {
     entity_id last = 0;
     for (entity_id entity = 0; entity < _entities.size(); entity++) {
         if (_entities[entity]) {
@@ -393,7 +393,7 @@ ecs::entity_id ecs::ecs<RegisteredComponents...>::__entities::last() const {
 }
 
 template <typename... RegisteredComponents>
-std::vector<ecs::entity_id> ecs::ecs<RegisteredComponents...>::__entities::all() const {
+std::vector<ecs::entity_id> ecs::engine<RegisteredComponents...>::__entities::all() const {
     std::vector<entity_id> found_entities;
     for (entity_id entity = 0; entity < _entities.size(); entity++) {
         if (_entities[entity]) {
@@ -404,7 +404,7 @@ std::vector<ecs::entity_id> ecs::ecs<RegisteredComponents...>::__entities::all()
 }
 
 template <typename... RegisteredComponents>
-ecs::ecs<RegisteredComponents...>::__entities::__entities(ecs& e)
+ecs::engine<RegisteredComponents...>::__entities::__entities(engine& e)
     : _ecs(e) {};
 
 #pragma endregion ecs implementations

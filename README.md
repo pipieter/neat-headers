@@ -3,7 +3,6 @@
 Single-header Entity-Component-System framework written for C++20. This framework makes heavy usage of templating to allow for quick access of entities and components with easy-to-read and intuitive syntax.
 
 
-
 # Example usage
 
 ```C++
@@ -13,7 +12,7 @@ struct Transform { float x, y, rotation; };
 struct Velocity  { float x, y; };
 struct Rotation  { float speed; };
 
-using ECS = ecs::ecs<Position, Velocity, Rotation>;
+using ECS = ecs::engine<Position, Velocity, Rotation>;
 
 void movement_system(Transform* transform, Velocity* velocity) {
     transform.x += velocity.x * GetDeltaTime();
@@ -58,7 +57,7 @@ int main() {
 # Framework
 
 The ECS-framework consists of three parts:
-- The entities, which represent an object.
+- The entities, which represent objects.
 - The components, which contain the data an entity holds.
 - The systems, which run on all entities and manipulate their state.
 
@@ -66,9 +65,9 @@ This framework exposes a new class to easily manage entities and components, and
 
 # API
 
-The framework exposes two new types: `ecs::entity_id` and `ecs::ecs`:
+The framework exposes two new types: `ecs::entity_id` and `ecs::engine`:
 - `ecs::entity_id` is an integer type that represents a unique id of an entity within an ECS system.
-- `ecs::ecs` is the entire ECS system. It is composed of three parts: the `entities` part, the `components` part, and the `systems` part. `ecs::ecs` also allows iteration over all entities with certain components.
+- `ecs::engine` is the entire ECS system. It is composed of three parts: the `entities` part, the `components` part, and the `systems` part. `ecs::engine` also allows iteration over all entities with certain components.
 
 ## Creation
 
@@ -78,7 +77,7 @@ An ECS object is created by specifying which components it will hold. For exampl
 #include "ecs.hpp"
 
 int main() {
-    ecs::ecs<Position, Velocity, Render> my_ecs;
+    ecs::engine<Position, Velocity, Render> my_ecs;
     return 0;
 }
 ```
@@ -88,7 +87,7 @@ It is possible to create an alias to increase readability, if desired.
 ```C++
 #include "ecs.hpp"
 
-using ECS = ecs::ecs<Position, Velocity, Render>;
+using ECS = ecs::engine<Position, Velocity, Render>;
 
 int main() {
     ECS ecs;
@@ -109,13 +108,13 @@ struct NonDefaultConstructor {
 };
 
 int main() {
-    ecs::ecs<Position, Velocity> ecs1; // allowed, all components are unique structs/classes.
-    ecs::ecs<EmptyStruct>        ecs2; // allowed, all components are unique structs/classes.
-    ecs::ecs<>                   ecs3; // allowed, all components are unique structs/classes.
+    ecs::engine<Position, Velocity> ecs1; // allowed, all components are unique structs/classes.
+    ecs::engine<EmptyStruct>        ecs2; // allowed, all components are unique structs/classes.
+    ecs::engine<>                   ecs3; // allowed, all components are unique structs/classes.
 
-    ecs::ecs<Position, int>         ecs4; // not allowed, int is not a struct.
-    ecs::ecs<Position, Position>    ecs5; // not allowed, Position appears multiple times.
-    ecs::ecs<NonDefaultConstructor> ecs6; // not allowed, component does not have a default constructor.
+    ecs::engine<Position, int>         ecs4; // not allowed, int is not a struct.
+    ecs::engine<Position, Position>    ecs5; // not allowed, Position appears multiple times.
+    ecs::engine<NonDefaultConstructor> ecs6; // not allowed, component does not have a default constructor.
 
     return 0;
 }
@@ -131,7 +130,7 @@ Entities are represented by numerical ids. Entities are handled in the `ecs.enti
 #include "ecs.hpp"
 
 int main() {
-    ecs::ecs<...> ecs;
+    ecs::engine<...> ecs;
 
     ecs::entity_id entity = ecs.entities.create(); // create a new entity
     bool exists  = ecs.entities.exists(entity);    // check if entity exists
@@ -160,7 +159,7 @@ Components are data objects which represent the state of an entity. An entity ca
 #include "ecs.hpp"
 
 int main() {
-    ecs::ecs<Position, ...> ecs;
+    ecs::engine<Position, ...> ecs;
 
     // Create entity
     ecs::entity_id entity = ecs.entities.create(); 
@@ -206,7 +205,7 @@ void move_system(ecs::entity entity, Position* pos, Velocity* vel) {
 }
 
 int main() {
-    ecs::ecs<Position, Velocity> ecs;
+    ecs::engine<Position, Velocity> ecs;
     // ...
 
     while (1) {
@@ -244,7 +243,7 @@ It's also possible to iterate over the entities and components directly, without
 #include "ecs.hpp"
 
 int main() {
-    ecs::ecs<Position, Velocity> ecs;
+    ecs::engine<Position, Velocity> ecs;
 
     for (auto [entity, position] : ecs.iterate<Position>()) {
         // ...
@@ -260,7 +259,7 @@ The code snippet above will iterate over all entities that have a Position compo
 #include "ecs.hpp"
 
 int main() {
-    ecs::ecs<Position, Velocity, Rotation> ecs;
+    ecs::engine<Position, Velocity, Rotation> ecs;
 
     for (
         auto [entity, position, velocity, rotation] 
@@ -278,7 +277,7 @@ The item in each iteration will be a std::tuple containing the entity id and poi
 #include "ecs.hpp"
 
 int main() {
-    ecs::ecs<Position, Velocity> ecs;
+    ecs::engine<Position, Velocity> ecs;
 
     for (auto [position, velocity] : ecs.iterate_components<Position, Velocity>()) {
         // ...
@@ -298,7 +297,7 @@ As mentioned before, it's discouraged to create new components while iterating o
 #include "ecs.hpp"
 
 int main() {
-    ecs::ecs<Position> ecs;
+    ecs::engine<Position> ecs;
     ecs.components.allocate<Position>(512); // Allocates enough memory so that up to 512 (continuous) entities can have a Position
     ecs.components.allocate_all(512);       // Applies allocate to all registered components.
 }
@@ -318,7 +317,7 @@ struct World;
 struct Transform;
 struct Velocity;
 
-using ECS = ecs::ecs<World, Transform, Velocity>;
+using ECS = ecs::engine<World, Transform, Velocity>;
 
 struct World     { ECS* ecs; float dt; };
 struct Transform { float x, y; };
