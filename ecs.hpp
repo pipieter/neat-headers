@@ -184,6 +184,8 @@ public:
         return false;
       std::apply([entity](auto &&...comp) { ((comp.remove(entity)), ...); },
                  _ecs.components._components);
+      _entities[entity] = false;
+      return true;
     }
 
     bool exists(entity_id entity) const {
