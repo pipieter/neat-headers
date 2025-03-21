@@ -9,36 +9,41 @@
 
 namespace ecs {
 
+namespace typing {
+
 template <typename...>
-inline constexpr auto __are_unique_types = std::true_type{};
+inline constexpr auto are_unique_types = std::true_type{};
+
 template <typename Type, typename... Rest>
-inline constexpr auto __are_unique_types<Type, Rest...> =
+inline constexpr auto are_unique_types<Type, Rest...> =
     std::bool_constant<(!std::is_same_v<Type, Rest> && ...) &&
-                       __are_unique_types<Rest...>>{};
+                       are_unique_types<Rest...>>{};
 
 template <typename T, typename... Ts>
-constexpr bool __is_any_of = (std::is_same<T, Ts>{} || ...);
+constexpr bool is_one_of = (std::is_same<T, Ts>{} || ...);
 
 template <typename Type, typename Head, typename... Tail>
-constexpr int __get_index() {
-  static_assert(__is_any_of<Type, Head, Tail...>,
+constexpr int get_index() {
+  static_assert(is_one_of<Type, Head, Tail...>,
                 "Type not part of accepted types.");
   if constexpr (std::is_same<Type, Head>::value)
     return 0;
   else
-    return 1 + __get_index<Type, Tail...>();
+    return 1 + get_index<Type, Tail...>();
 }
 
-template <typename...>
-inline constexpr auto __are_all_classes = std::true_type{};
-template <typename T, typename... Ts>
-inline constexpr auto __are_all_classes<T, Ts...> =
-    std::bool_constant<(std::is_class_v<T>)&&__are_all_classes<Ts...>>{};
+template <typename...> inline constexpr auto are_all_classes = std::true_type{};
 
-template <typename Subset, typename Set> constexpr bool __is_subset_of = false;
+template <typename T, typename... Ts>
+inline constexpr auto are_all_classes<T, Ts...> =
+    std::bool_constant<(std::is_class_v<T>)&&are_all_classes<Ts...>>{};
+
+template <typename Subset, typename Set> constexpr bool is_subset_of = false;
 template <typename... Ts, typename... Us>
-inline constexpr bool __is_subset_of<std::tuple<Ts...>, std::tuple<Us...>> =
-    (__is_any_of<Ts, Us...> && ...);
+inline constexpr bool is_subset_of<std::tuple<Ts...>, std::tuple<Us...>> =
+    (is_one_of<Ts, Us...> && ...);
+
+} // namespace typing
 
 using entity_id = std::size_t;
 const entity_id invalid_entity = SIZE_MAX;
@@ -113,17 +118,18 @@ template <typename... RegisteredComponents> class ecs {
 private:
   template <typename RequestedComponent>
   __componentlist<RequestedComponent> &_get_components_list() {
-    static_assert(__is_any_of<RequestedComponent, RegisteredComponents...>,
-                  "Requested component type is not registered.");
-    return std::get<__get_index<RequestedComponent, RegisteredComponents...>()>(
+    static_assert(
+        typing::is_one_of<RequestedComponent, RegisteredComponents...>,
+        "Requested component type is not registered.");
+    return std::get<typing::get_index<RequestedComponent, RegisteredComponents...>()>(
         components._components);
   }
 
   template <typename... RequestedComponents>
   std::vector<entity_id> _get_entities_who_have_components() {
     static_assert(
-        __is_subset_of<std::tuple<RequestedComponents...>,
-                       std::tuple<RegisteredComponents...>>,
+        typing::is_subset_of<std::tuple<RequestedComponents...>,
+                              std::tuple<RegisteredComponents...>>,
         "At least one of the requested component types is not registered.");
     std::vector<entity_id> found_entities;
     for (entity_id entity = 0; entity < entities._entities.size(); entity++) {
@@ -162,10 +168,10 @@ private:
 
 public:
   ecs() : entities(*this), components(*this), systems(*this) {
-    static_assert(__are_unique_types<RegisteredComponents...>,
+    static_assert(typing::are_unique_types<RegisteredComponents...>,
                   "Not all registered component types are unique.");
     static_assert(
-        __are_all_classes<RegisteredComponents...>,
+        typing::are_all_classes<RegisteredComponents...>,
         "All registered component types must be a struct or a class.");
   }
 
@@ -237,8 +243,9 @@ public:
   public:
     template <typename RequestedComponent>
     RequestedComponent *get(entity_id entity) {
-      static_assert(__is_any_of<RequestedComponent, RegisteredComponents...>,
-                    "Requested component type is not registered.");
+      static_assert(
+          typing::is_one_of<RequestedComponent, RegisteredComponents...>,
+          "Requested component type is not registered.");
       if (!_ecs.entities.exists(entity))
         return nullptr;
       return _ecs._get_components_list<RequestedComponent>().get(entity);
@@ -246,8 +253,9 @@ public:
 
     template <typename RequestedComponent, typename... Args>
     RequestedComponent *add(entity_id entity, Args... args) {
-      static_assert(__is_any_of<RequestedComponent, RegisteredComponents...>,
-                    "Requested component type is not registered.");
+      static_assert(
+          typing::is_one_of<RequestedComponent, RegisteredComponents...>,
+          "Requested component type is not registered.");
       if (!_ecs.entities.exists(entity))
         return nullptr;
       return _ecs._get_components_list<RequestedComponent>().add(entity,
@@ -255,16 +263,18 @@ public:
     }
 
     template <typename RequestedComponent> bool has(entity_id entity) const {
-      static_assert(__is_any_of<RequestedComponent, RegisteredComponents...>,
-                    "Requested component type is not registered.");
+      static_assert(
+          typing::is_one_of<RequestedComponent, RegisteredComponents...>,
+          "Requested component type is not registered.");
       if (!_ecs.entities.exists(entity))
         return false;
       return _ecs._get_components_list<RequestedComponent>().has(entity);
     }
 
     template <typename RequestedComponent> bool remove(entity_id entity) {
-      static_assert(__is_any_of<RequestedComponent, RegisteredComponents...>,
-                    "Requested component type is not registered.");
+      static_assert(
+          typing::is_one_of<RequestedComponent, RegisteredComponents...>,
+          "Requested component type is not registered.");
       if (!_ecs.entities.exists(entity))
         return false;
       return _ecs._get_components_list<RequestedComponent>().remove(entity);
@@ -272,14 +282,16 @@ public:
 
     template <typename RequestedComponent>
     std::tuple<entity_id, RequestedComponent *> first() {
-      static_assert(__is_any_of<RequestedComponent, RegisteredComponents...>,
-                    "Requested component type is not registered.");
+      static_assert(
+          typing::is_one_of<RequestedComponent, RegisteredComponents...>,
+          "Requested component type is not registered.");
       return _ecs._get_components_list<RequestedComponent>().first();
     }
 
     template <typename RequestedComponent> bool allocate(size_t new_size) {
-      static_assert(__is_any_of<RequestedComponent, RegisteredComponents...>,
-                    "Requested component type is not registered.");
+      static_assert(
+          typing::is_one_of<RequestedComponent, RegisteredComponents...>,
+          "Requested component type is not registered.");
       return _ecs._get_components_list<RequestedComponent>().allocate(new_size);
     }
 
@@ -319,8 +331,8 @@ public:
   template <typename... RequestedComponents>
   std::vector<std::tuple<entity_id, RequestedComponents *...>> iterate() {
     static_assert(
-        __is_subset_of<std::tuple<RequestedComponents...>,
-                       std::tuple<RegisteredComponents...>>,
+        typing::is_subset_of<std::tuple<RequestedComponents...>,
+                              std::tuple<RegisteredComponents...>>,
         "At least one of the requested components is not registered.");
     std::vector<entity_id> valid_entities =
         _get_entities_who_have_components<RequestedComponents...>();
@@ -337,8 +349,8 @@ public:
   template <typename... RequestedComponents>
   std::vector<std::tuple<RequestedComponents *...>> iterate_components() {
     static_assert(
-        __is_subset_of<std::tuple<RequestedComponents...>,
-                       std::tuple<RegisteredComponents...>>,
+        typing::is_subset_of<std::tuple<RequestedComponents...>,
+                              std::tuple<RegisteredComponents...>>,
         "At least one of the requested components is not registered.");
     std::vector<entity_id> valid_entities =
         _get_entities_who_have_components<RequestedComponents...>();
