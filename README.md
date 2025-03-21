@@ -225,7 +225,9 @@ void move_system(Position* pos, Velocity* vel);
 
 are both allowed. The only difference is that the second signature cannot use the entity id in its body. Additionally, systems must be function pointers, lambdas are not supported.
 
-Creating and deleting components of a type within a system's signature is heavily discouraged, as this could result in the internal storage of components moving and thus invalidating the component pointers, potentially resulting in undefined behavior. For more information, see [Component location and lifetime](#component-location-and-lifetime).
+If no component types are listed in the signature, the ECS will iterate over all entities.
+
+Creating and deleting components of a type within the system's signature is heavily discouraged, as this could result in the internal storage of components moving and thus invalidating the component pointers, potentially resulting in undefined behavior. For more information, see [Component location and lifetime](#component-location-and-lifetime).
 
 ## Iterating
 
