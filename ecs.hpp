@@ -54,64 +54,18 @@ private:
   std::vector<ComponentType> _components;
 
 public:
-  __componentlist() {
-    static_assert(std::is_class_v<ComponentType>,
-                  "Component type is not a struct or class.");
-    static_assert(std::is_default_constructible_v<ComponentType>,
-                  "Component type does not have a default constructor.");
-  }
-
-  bool has(entity_id entity) const {
-    if (entity >= _tags.size())
-      return false;
-    return _tags[entity];
-  }
-
-  ComponentType *get(entity_id entity) {
-    if (!has(entity))
-      return nullptr;
-    return &_components[entity];
-  }
+  __componentlist();
+  ~__componentlist();
 
   template <typename... Args>
-  ComponentType *add(entity_id entity, Args... args) {
-    static_assert(std::is_constructible_v<ComponentType, Args...>,
-                  "Component type can't be built from given arguments.");
-    if (entity >= _tags.size()) {
-      _tags.resize(entity + 1, false);
-      _components.resize(entity + 1);
-    }
+  ComponentType *add(entity_id entity, Args... args);
+  ComponentType *get(entity_id entity);
 
-    _tags[entity] = true;
-    _components[entity] = ComponentType(args...);
-    return &_components[entity];
-  }
+  bool has(entity_id entity) const;
+  bool remove(entity_id entity);
+  bool allocate(size_t new_count);
 
-  bool remove(entity_id entity) {
-    if (!has(entity))
-      return false;
-    _tags[entity] = false;
-    _components[entity] = ComponentType(); // Replace with a default component
-    return true;
-  }
-
-  std::tuple<entity_id, ComponentType *> first() {
-    for (entity_id entity = 0; entity < _tags.size(); entity++) {
-      if (_tags[entity]) {
-        return {entity, &_components[entity]};
-      }
-    }
-    return {invalid_entity, nullptr};
-  }
-
-  bool allocate(size_t new_count) {
-    if (new_count < _tags.size()) {
-      return false;
-    }
-    _tags.resize(new_count, false);
-    _components.resize(new_count);
-    return true;
-  }
+  std::tuple<entity_id, ComponentType *> first();
 };
 
 template <typename... RegisteredComponents> class ecs {
@@ -121,7 +75,8 @@ private:
     static_assert(
         typing::is_one_of<RequestedComponent, RegisteredComponents...>,
         "Requested component type is not registered.");
-    return std::get<typing::get_index<RequestedComponent, RegisteredComponents...>()>(
+    return std::get<
+        typing::get_index<RequestedComponent, RegisteredComponents...>()>(
         components._components);
   }
 
@@ -129,7 +84,7 @@ private:
   std::vector<entity_id> _get_entities_who_have_components() {
     static_assert(
         typing::is_subset_of<std::tuple<RequestedComponents...>,
-                              std::tuple<RegisteredComponents...>>,
+                             std::tuple<RegisteredComponents...>>,
         "At least one of the requested component types is not registered.");
     std::vector<entity_id> found_entities;
     for (entity_id entity = 0; entity < entities._entities.size(); entity++) {
@@ -167,69 +122,22 @@ private:
   }
 
 public:
-  ecs() : entities(*this), components(*this), systems(*this) {
-    static_assert(typing::are_unique_types<RegisteredComponents...>,
-                  "Not all registered component types are unique.");
-    static_assert(
-        typing::are_all_classes<RegisteredComponents...>,
-        "All registered component types must be a struct or a class.");
-  }
+  ecs();
+  ~ecs();
 
   class __entities final {
   private:
     friend class ecs;
     ecs &_ecs;
     std::vector<bool> _entities;
-    explicit __entities(ecs &e) : _ecs(e){};
+    explicit __entities(ecs &e);
 
   public:
-    entity_id create() {
-      for (entity_id entity = 0; entity < _entities.size(); entity++) {
-        if (!_entities[entity]) {
-          _entities[entity] = true;
-          return entity;
-        }
-      }
-      entity_id entity = _entities.size();
-      _entities.push_back(true);
-      return entity;
-    }
-
-    bool remove(entity_id entity) {
-      if (!exists(entity))
-        return false;
-      std::apply([entity](auto &&...comp) { ((comp.remove(entity)), ...); },
-                 _ecs.components._components);
-      _entities[entity] = false;
-      return true;
-    }
-
-    bool exists(entity_id entity) const {
-      if (entity >= _ecs.entities._entities.size()) {
-        return false;
-      }
-      return _ecs.entities._entities[entity];
-    }
-
-    entity_id last() const {
-      entity_id last = 0;
-      for (entity_id entity = 0; entity < _entities.size(); entity++) {
-        if (_entities[entity]) {
-          last = entity;
-        }
-      }
-      return last;
-    }
-
-    std::vector<entity_id> all() const {
-      std::vector<entity_id> found_entities;
-      for (entity_id entity = 0; entity < _entities.size(); entity++) {
-        if (_entities[entity]) {
-          found_entities.push_back(entity);
-        }
-      }
-      return found_entities;
-    }
+    entity_id create();
+    bool remove(entity_id entity);
+    bool exists(entity_id entity) const;
+    entity_id last() const;
+    std::vector<entity_id> all() const;
   } entities;
 
   class __components final {
@@ -237,7 +145,6 @@ public:
     friend class ecs;
     ecs &_ecs;
     std::tuple<__componentlist<RegisteredComponents>...> _components;
-
     explicit __components(ecs &e) : _ecs(e){};
 
   public:
@@ -332,7 +239,7 @@ public:
   std::vector<std::tuple<entity_id, RequestedComponents *...>> iterate() {
     static_assert(
         typing::is_subset_of<std::tuple<RequestedComponents...>,
-                              std::tuple<RegisteredComponents...>>,
+                             std::tuple<RegisteredComponents...>>,
         "At least one of the requested components is not registered.");
     std::vector<entity_id> valid_entities =
         _get_entities_who_have_components<RequestedComponents...>();
@@ -350,7 +257,7 @@ public:
   std::vector<std::tuple<RequestedComponents *...>> iterate_components() {
     static_assert(
         typing::is_subset_of<std::tuple<RequestedComponents...>,
-                              std::tuple<RegisteredComponents...>>,
+                             std::tuple<RegisteredComponents...>>,
         "At least one of the requested components is not registered.");
     std::vector<entity_id> valid_entities =
         _get_entities_who_have_components<RequestedComponents...>();
@@ -366,5 +273,158 @@ public:
   }
 };
 }; // namespace ecs
+
+#pragma region componentlist implementations
+
+template <typename ComponentType>
+ecs::__componentlist<ComponentType>::__componentlist::__componentlist() {
+  static_assert(std::is_class_v<ComponentType>,
+                "Component type is not a struct or class.");
+  static_assert(std::is_default_constructible_v<ComponentType>,
+                "Component type does not have a default constructor.");
+}
+
+template <typename ComponentType>
+ecs::__componentlist<ComponentType>::__componentlist::~__componentlist() {}
+
+template <typename ComponentType>
+bool ecs::__componentlist<ComponentType>::__componentlist::has(
+    entity_id entity) const {
+  if (entity >= _tags.size())
+    return false;
+  return _tags[entity];
+}
+
+template <typename ComponentType>
+ComponentType *
+ecs::__componentlist<ComponentType>::__componentlist::get(entity_id entity) {
+  if (!has(entity))
+    return nullptr;
+  return &_components[entity];
+}
+
+template <typename ComponentType>
+template <typename... Args>
+ComponentType *ecs::__componentlist<ComponentType>::__componentlist::add(
+    ::ecs::entity_id entity, Args... args) {
+  static_assert(std::is_constructible_v<ComponentType, Args...>,
+                "Component type can't be built from given arguments.");
+  if (entity >= _tags.size()) {
+    _tags.resize(entity + 1, false);
+    _components.resize(entity + 1);
+  }
+
+  _tags[entity] = true;
+  _components[entity] = ComponentType(args...);
+  return &_components[entity];
+}
+
+template <typename ComponentType>
+bool ecs::__componentlist<ComponentType>::__componentlist::remove(
+    entity_id entity) {
+  if (!has(entity))
+    return false;
+  _tags[entity] = false;
+  _components[entity] = ComponentType(); // Replace with a default component
+  return true;
+}
+
+template <typename ComponentType>
+std::tuple<ecs::entity_id, ComponentType *>
+ecs::__componentlist<ComponentType>::__componentlist::first() {
+  for (entity_id entity = 0; entity < _tags.size(); entity++) {
+    if (_tags[entity]) {
+      return {entity, &_components[entity]};
+    }
+  }
+  return {invalid_entity, nullptr};
+}
+
+template <typename ComponentType>
+bool ecs::__componentlist<ComponentType>::__componentlist::allocate(
+    size_t new_count) {
+  if (new_count < _tags.size()) {
+    return false;
+  }
+  _tags.resize(new_count, false);
+  _components.resize(new_count);
+  return true;
+}
+
+#pragma endregion componentlist implementations
+
+#pragma region ecs implementations
+
+template <typename... RegisteredComponents>
+ecs::ecs<RegisteredComponents...>::ecs()
+    : entities(*this), components(*this), systems(*this) {
+  static_assert(typing::are_unique_types<RegisteredComponents...>,
+                "Not all registered component types are unique.");
+  static_assert(typing::are_all_classes<RegisteredComponents...>,
+                "All registered component types must be a struct or a class.");
+}
+
+template <typename... RegisteredComponents>
+ecs::ecs<RegisteredComponents...>::ecs::~ecs() {}
+
+template <typename... RegisteredComponents>
+ecs::entity_id ecs::ecs<RegisteredComponents...>::__entities::create() {
+  for (entity_id entity = 0; entity < _entities.size(); entity++) {
+    if (!_entities[entity]) {
+      _entities[entity] = true;
+      return entity;
+    }
+  }
+  entity_id entity = _entities.size();
+  _entities.push_back(true);
+  return entity;
+}
+
+template <typename... RegisteredComponents>
+bool ecs::ecs<RegisteredComponents...>::__entities::remove(entity_id entity) {
+  if (!exists(entity))
+    return false;
+  std::apply([entity](auto &&...comp) { ((comp.remove(entity)), ...); },
+             _ecs.components._components);
+  _entities[entity] = false;
+  return true;
+}
+
+template <typename... RegisteredComponents>
+bool ecs::ecs<RegisteredComponents...>::__entities::exists(
+    entity_id entity) const {
+  if (entity >= _ecs.entities._entities.size()) {
+    return false;
+  }
+  return _ecs.entities._entities[entity];
+}
+
+template <typename... RegisteredComponents>
+ecs::entity_id ecs::ecs<RegisteredComponents...>::__entities::last() const {
+  entity_id last = 0;
+  for (entity_id entity = 0; entity < _entities.size(); entity++) {
+    if (_entities[entity]) {
+      last = entity;
+    }
+  }
+  return last;
+}
+
+template <typename... RegisteredComponents>
+std::vector<ecs::entity_id>
+ecs::ecs<RegisteredComponents...>::__entities::all() const {
+  std::vector<entity_id> found_entities;
+  for (entity_id entity = 0; entity < _entities.size(); entity++) {
+    if (_entities[entity]) {
+      found_entities.push_back(entity);
+    }
+  }
+  return found_entities;
+}
+
+template <typename... RegisteredComponents>
+ecs::ecs<RegisteredComponents...>::__entities::__entities(ecs &e) : _ecs(e){};
+
+#pragma endregion ecs implementations
 
 #endif // ECS_HPP_
