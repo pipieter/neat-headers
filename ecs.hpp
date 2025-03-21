@@ -227,6 +227,8 @@ public:
     template <typename RequestedComponent> bool has(entity_id entity) const {
       static_assert(__is_any_of<RequestedComponent, RegisteredComponents...>,
                     "Requested component type is not registered.");
+      if (!_ecs.entities.exists(entity))
+        return false;
       return _ecs._get_components_list<RequestedComponent>().has(entity);
     }
 
