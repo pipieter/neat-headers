@@ -19,8 +19,8 @@ template <typename T> constexpr T normalize(T value, T start, T end);
 template <typename T> constexpr T rescale(T value, T oldMin, T oldMax, T newMin, T newMax);
 template <typename T> constexpr T absdiff(T a, T b);
 
-constexpr size_t                  factorial(size_t n);
-constexpr size_t                  binomial_coefficient(size_t n, size_t k);
+inline constexpr size_t           factorial(size_t n);
+inline constexpr size_t           binomial_coefficient(size_t n, size_t k);
 template <typename T> constexpr T polynomial(T t, std::initializer_list<T> coefficients);
 
 template <typename T, typename Eps> constexpr bool equals(T a, T b, Eps epsilon = 1e-6);
@@ -133,14 +133,14 @@ template <typename T> constexpr T neat::math::absdiff(T a, T b) {
         return b - a;
 }
 
-constexpr size_t neat::math::factorial(size_t n) {
+inline constexpr size_t neat::math::factorial(size_t n) {
     size_t result = 1;
     for (size_t i = 2; i <= n; i++)
         result *= i;
     return result;
 }
 
-constexpr size_t neat::math::binomial_coefficient(size_t n, size_t k) {
+inline constexpr size_t neat::math::binomial_coefficient(size_t n, size_t k) {
     return factorial(n) / (factorial(k) * factorial(n - k));
 }
 
