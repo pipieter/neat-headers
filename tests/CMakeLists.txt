@@ -7,6 +7,7 @@ set(CMAKE_COLOR_DIAGNOSTICS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 
+add_executable(tests_ecs   tests_ecs.cpp)
 add_executable(tests_types tests_types.cpp)
 
 add_compile_options(PUBLIC -g
