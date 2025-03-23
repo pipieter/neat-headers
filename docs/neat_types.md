@@ -76,7 +76,6 @@ neat::types::are_all_same<int, int*, int&> == false
 Removes all qualifiers, references, and pointers from a type.
 
 ```C++
-    // remove_all_t
 neat::types::remove_all_t<int>                  == int;
 neat::types::remove_all_t<int&>                 == int;
 neat::types::remove_all_t<const volatile int*&> == int;
