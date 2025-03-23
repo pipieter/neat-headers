@@ -23,7 +23,7 @@ inline constexpr size_t           factorial(size_t n);
 inline constexpr size_t           binomial_coefficient(size_t n, size_t k);
 template <typename T> constexpr T polynomial(T t, std::initializer_list<T> coefficients);
 
-template <typename T, typename Eps> constexpr bool equals(T a, T b, Eps epsilon = 1e-6);
+template <typename T, typename Eps = double> constexpr bool equals(T a, T b, Eps epsilon = 1e-6);
 
 template <typename T> constexpr bool within(T value, T start, T end);
 template <typename T> constexpr bool overlap(T min0, T max0, T min1, T max1);
@@ -158,7 +158,7 @@ template <typename T> constexpr T neat::math::polynomial(T t, std::initializer_l
 }
 
 template <typename T, typename Eps> constexpr bool neat::math::equals(T a, T b, Eps epsilon) {
-    return absdiff(a, b) <= static_cast<T>(epsilon);
+    return absdiff(a, b) <= abs(static_cast<T>(epsilon));
 }
 
 template <typename T> constexpr bool neat::math::within(T value, T start, T end) {
