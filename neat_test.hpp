@@ -53,7 +53,7 @@ inline void neat::test::run(void (&func)(), const char* file) {
 inline void neat::test::assert_true(bool value, const char* file, int line) {
     data.asserts_run++;
     if (!value) {
-        std::cout << colors::red << "- Assertion failed " << file << ":" << line << colors::reset << std::endl;
+        std::cout << colors::red << "- Assertion failed: " << file << ":" << line << colors::reset << std::endl;
         data.asserts_failed++;
     } else {
         data.asserts_succeeded++;
@@ -63,8 +63,8 @@ inline void neat::test::assert_true(bool value, const char* file, int line) {
 template <typename T> void neat::test::assert_eq(T value, T expected, const char* file, int line) {
     data.asserts_run++;
     if (value != expected) {
-        std::cout << colors::red << "- neat::test::assert_eq failed " << file << ":" << line
-                  << ", expected " << expected << ", received " << value << colors::reset << std::endl;
+        std::cout << colors::red << "- Assertion failed: " << file << ":" << line
+                  << "\treceived " << value << ", expected " << expected << colors::reset << std::endl;
         data.asserts_failed++;
     } else {
         data.asserts_succeeded++;
