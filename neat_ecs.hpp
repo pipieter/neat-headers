@@ -114,6 +114,7 @@ class engine {
 
        public:
         template <typename RequestedComponent> RequestedComponent*                   get(entity_id entity);
+        template <typename RequestedComponent> std::vector<RequestedComponent*>      get(const std::vector<entity_id>& entity_list);
         template <typename RequestedComponent, typename... Args> RequestedComponent* add(entity_id entity, Args... args);
 
         template <typename RequestedComponent> bool has(entity_id entity) const;
@@ -373,6 +374,18 @@ RequestedComponent* neat::ecs::engine<RegisteredComponents...>::components::get(
     if (!_ecs.entities.exists(entity))
         return nullptr;
     return _ecs._get_components_list<RequestedComponent>().get(entity);
+}
+
+template <typename... RegisteredComponents>
+template <typename RequestedComponent>
+std::vector<RequestedComponent*> neat::ecs::engine<RegisteredComponents...>::components::get(const std::vector<entity_id>& entity_list) {
+    static_assert(typing::is_one_of<RequestedComponent, RegisteredComponents...>, "Requested component type is not registered.");
+    std::vector<RequestedComponent*> result;
+    result.reserve(entity_list.size());
+    for (entity_id entity : entity_list) {
+        result.push_back(get<RequestedComponent>(entity));
+    }
+    return result;
 }
 
 template <typename... RegisteredComponents>

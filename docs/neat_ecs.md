@@ -183,6 +183,8 @@ The component type is given as a template in each method. This type must be regi
 
 `ecs.components.add` returns a pointer to the created component. If the component could not be created. Additionally, the arguments for the constructor of the component can be given after the entity id. If the entity does not exist, the component is not created and a null pointer is returned instead.
 
+`ecs.components.get` returns the component of an entity. If the entity does not exist, or the entity does not have the component, null is returned. A variant exists where an `std::vector` can be provided, in which case an `std::vector` of components will be returned in the same order as the ids.
+
 `ecs.components.has` checks whether an entity has a component of the given type. If the entity does not exist or the entity does exist but does not have the component, false is returned. Otherwise it returns true.
 
 `ecs.components.remove` removes the component from an entity. If the entity does not exist or the entity does exist but does not have the component, this method does nothing and returns false. Otherwise it deletes the component and return true;
