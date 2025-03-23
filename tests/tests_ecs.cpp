@@ -1,6 +1,7 @@
 #include <cassert>
 
 #include "../neat_ecs.hpp"
+#include "../neat_test.hpp"
 
 struct A {
     int a = 0;
@@ -26,17 +27,17 @@ void test_deleted_entity_no_longer_exists() {
     auto e5 = ecs.entities.create();
     auto e6 = ecs.entities.create();
 
-    assert(ecs.entities.remove(e2));
-    assert(ecs.entities.remove(e4));
-    assert(ecs.entities.remove(e5));
+    NEAT_TEST_ASSERT(ecs.entities.remove(e2));
+    NEAT_TEST_ASSERT(ecs.entities.remove(e4));
+    NEAT_TEST_ASSERT(ecs.entities.remove(e5));
 
-    assert(ecs.entities.exists(e1));
-    assert(ecs.entities.exists(e3));
-    assert(ecs.entities.exists(e6));
+    NEAT_TEST_ASSERT(ecs.entities.exists(e1));
+    NEAT_TEST_ASSERT(ecs.entities.exists(e3));
+    NEAT_TEST_ASSERT(ecs.entities.exists(e6));
 
-    assert(not ecs.entities.exists(e2));
-    assert(not ecs.entities.exists(e4));
-    assert(not ecs.entities.exists(e5));
+    NEAT_TEST_ASSERT(not ecs.entities.exists(e2));
+    NEAT_TEST_ASSERT(not ecs.entities.exists(e4));
+    NEAT_TEST_ASSERT(not ecs.entities.exists(e5));
 }
 
 void test_deleted_entity_cant_be_deleted_again() {
@@ -44,10 +45,10 @@ void test_deleted_entity_cant_be_deleted_again() {
 
     auto e = ecs.entities.create();
 
-    assert(ecs.entities.remove(e));
-    assert(not ecs.entities.exists(e));
-    assert(not ecs.entities.remove(e));
-    assert(not ecs.entities.exists(e));
+    NEAT_TEST_ASSERT(ecs.entities.remove(e));
+    NEAT_TEST_ASSERT(not ecs.entities.exists(e));
+    NEAT_TEST_ASSERT(not ecs.entities.remove(e));
+    NEAT_TEST_ASSERT(not ecs.entities.exists(e));
 }
 
 void test_get_component_returns_same() {
@@ -56,16 +57,18 @@ void test_get_component_returns_same() {
     auto e = ecs.entities.create();
 
     ecs.components.add<A>(e, 100);
-    assert(ecs.components.get<A>(e)->a == 100);
+    NEAT_TEST_ASSERT(ecs.components.get<A>(e)->a == 100);
 
     ecs.components.get<A>(e)->a = 50;
-    assert(ecs.components.get<A>(e)->a == 50);
+    NEAT_TEST_ASSERT(ecs.components.get<A>(e)->a == 50);
 }
 
 int main() {
-    test_deleted_entity_no_longer_exists();
-    test_deleted_entity_cant_be_deleted_again();
-    test_get_component_returns_same();
+    NEAT_TEST_RUN(test_deleted_entity_no_longer_exists);
+    NEAT_TEST_RUN(test_deleted_entity_cant_be_deleted_again);
+    NEAT_TEST_RUN(test_get_component_returns_same);
+
+    NEAT_TEST_PRINT_STATS();
 
     return 0;
 }
