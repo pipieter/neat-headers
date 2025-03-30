@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <queue>
 #include <tuple>
 #include <type_traits>
 #include <vector>
@@ -93,8 +94,9 @@ class engine {
     class entities final {
        private:
         friend class engine;
-        engine&           _ecs;
-        std::vector<bool> _entities;
+        engine&               _ecs;
+        std::vector<bool>     _entities;
+        std::queue<entity_id> _free_entities;
         explicit entities(engine& e);
 
        public:
@@ -307,12 +309,13 @@ neat::ecs::engine<RegisteredComponents...>::entities::entities(engine& e)
 
 template <typename... RegisteredComponents>
 neat::ecs::entity_id neat::ecs::engine<RegisteredComponents...>::entities::create() {
-    for (entity_id entity = 0; entity < _entities.size(); entity++) {
-        if (!_entities[entity]) {
-            _entities[entity] = true;
-            return entity;
-        }
+    if (!_free_entities.empty()) {
+        entity_id entity = _free_entities.front();
+        _free_entities.pop();
+        _entities[entity] = true;
+        return entity;
     }
+
     entity_id entity = _entities.size();
     _entities.push_back(true);
     return entity;
@@ -325,6 +328,7 @@ bool neat::ecs::engine<RegisteredComponents...>::entities::remove(entity_id enti
     std::apply([entity](auto&&... comp) { ((comp.remove(entity)), ...); },
                _ecs.components._components);
     _entities[entity] = false;
+    _free_entities.push(entity);
     return true;
 }
 
