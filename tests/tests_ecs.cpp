@@ -87,11 +87,43 @@ void test_get_multiple_components() {
     NEAT_TEST_ASSERT(a5 == as[2]);
 }
 
+void test_system_types_func1(A* a) {
+    a->a += 0b0001;
+}
+
+void test_system_types_func2(neat::ecs::entity_id, A* a) {
+    a->a += 0b0010;
+}
+
+void test_system_types_func3(ecs&, A* a) {
+    a->a += 0b0100;
+}
+
+void test_system_types_func4(ecs&, neat::ecs::entity_id, A* a) {
+    a->a += 0b1000;
+}
+
+void test_system_types() {
+    ecs ecs;
+
+    auto e = ecs.entities.create();
+    (void)ecs.components.add<A>(e);
+
+    ecs.systems.execute(test_system_types_func1);
+    ecs.systems.execute(test_system_types_func2);
+    ecs.systems.execute(test_system_types_func3);
+    ecs.systems.execute(test_system_types_func4);
+
+    auto [_, a] = ecs.components.first<A>();
+    NEAT_TEST_ASSERT(a->a == 0b1111);
+}
+
 int main() {
     NEAT_TEST_RUN(test_deleted_entity_no_longer_exists);
     NEAT_TEST_RUN(test_deleted_entity_cant_be_deleted_again);
     NEAT_TEST_RUN(test_get_component_returns_same);
     NEAT_TEST_RUN(test_get_multiple_components);
+    NEAT_TEST_RUN(test_system_types);
 
     NEAT_TEST_PRINT_STATS();
 

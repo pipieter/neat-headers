@@ -136,6 +136,8 @@ class engine {
        public:
         template <typename... FuncComponents> void execute(void (&system)(FuncComponents*...));
         template <typename... FuncComponents> void execute(void (&system)(entity_id, FuncComponents*...));
+        template <typename... FuncComponents> void execute(void (&system)(engine<RegisteredComponents...>&, FuncComponents*...));
+        template <typename... FuncComponents> void execute(void (&system)(engine<RegisteredComponents...>&, entity_id, FuncComponents*...));
     };
 };
 };  // namespace neat::ecs
@@ -461,6 +463,22 @@ template <typename... FuncComponents>
 void neat::ecs::engine<RegisteredComponents...>::systems::execute(void (&system)(FuncComponents*...)) {
     for (auto data : _ecs.iterate_components<FuncComponents...>()) {
         std::apply(system, data);
+    }
+}
+
+template <typename... RegisteredComponents>
+template <typename... FuncComponents>
+void neat::ecs::engine<RegisteredComponents...>::systems::execute(void (&system)(engine<RegisteredComponents...>&, entity_id, FuncComponents*...)) {
+    for (auto data : _ecs.iterate<FuncComponents...>()) {
+        std::apply(system, std::tuple_cat(std::tie(this->_ecs), data));
+    }
+}
+
+template <typename... RegisteredComponents>
+template <typename... FuncComponents>
+void neat::ecs::engine<RegisteredComponents...>::systems::execute(void (&system)(engine<RegisteredComponents...>&, FuncComponents*...)) {
+    for (auto data : _ecs.iterate_components<FuncComponents...>()) {
+        std::apply(system, std::tuple_cat(std::tie(this->_ecs), data));
     }
 }
 

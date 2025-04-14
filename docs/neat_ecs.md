@@ -231,7 +231,12 @@ void move_system(neat::ecs::entity_id entity, Position* pos, Velocity* vel);
 void move_system(Position* pos, Velocity* vel);
 ```
 
-are both allowed. The only difference is that the second signature cannot use the entity id in its body. Additionally, systems must be function pointers, lambdas are not supported.
+are both allowed. The only difference is that the second signature cannot use the entity id in its body. Additionally, systems must be function pointers, lambdas are not supported. Additional signatures are available where a reference to the engine is given, for example:
+
+```C++
+void move_system(neat::ecs::engine<...>& ecs, neat::ecs::entity_id entity, Position* pos, Velocity* vel);
+void move_system(neat::ecs::engine<...>& ecs, Position* pos, Velocity* vel);
+```
 
 If no component types are listed in the signature, the ECS will iterate over all entities.
 
