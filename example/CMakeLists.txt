@@ -8,7 +8,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(raylib)
-add_executable(ecs_transform ecs_transform.cpp)
+add_executable(allocators_binary_tree allocators_binary_tree.cpp)
+add_executable(ecs_transform          ecs_transform.cpp)
 
 target_link_libraries(ecs_transform raylib)
 target_compile_options(ecs_transform PUBLIC -g
