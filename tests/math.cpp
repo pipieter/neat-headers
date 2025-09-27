@@ -1,7 +1,6 @@
 #include <cmath>
-
-#include "../neat_math.hpp"
-#include "../neat_test.hpp"
+#include <neat/math.hpp>
+#include <neat/test.hpp>
 
 void test_abs(void) {
     NEAT_TEST_ASSERT_EQ(neat::math::abs(500), 500);

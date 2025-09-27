@@ -1,9 +1,8 @@
 #include <cstddef>
 #include <cstdlib>
 #include <iostream>
+#include <neat/allocators.hpp>
 #include <vector>
-
-#include "../neat_allocators.hpp"
 
 struct Node {
     Node* left;

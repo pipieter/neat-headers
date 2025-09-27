@@ -1,7 +1,6 @@
 #include <cassert>
-
-#include "../neat_ecs.hpp"
-#include "../neat_test.hpp"
+#include <neat/ecs.hpp>
+#include <neat/test.hpp>
 
 struct A {
     int a = 0;

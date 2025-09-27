@@ -1,7 +1,6 @@
 #include <cstdint>
+#include <neat/types.hpp>
 #include <type_traits>
-
-#include "../neat_types.hpp"
 
 struct A {
     int a;
