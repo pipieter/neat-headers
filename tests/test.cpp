@@ -1,7 +1,6 @@
 
 #include <cstring>
-
-#include "../neat_test.hpp"
+#include <neat/test.hpp>
 
 void test_success_1() {
     NEAT_TEST_ASSERT(3 == 3);

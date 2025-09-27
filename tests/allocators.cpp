@@ -1,5 +1,5 @@
-#include "../neat_allocators.hpp"
-#include "../neat_test.hpp"
+#include <neat/allocators.hpp>
+#include <neat/test.hpp>
 
 void test_arena_small_ints(void) {
     neat::allocators::arena<int> arena(4);

@@ -5,7 +5,7 @@ Single-header library for specialized memory allocators.
 # Example usage
 
 ```C++
-#include "neat_allocators.hpp
+#include <neat/allocators.hpp>
 
 int main() {
     neat::allocators::arena<int> arena(4); // Allocates enough memory for four ints

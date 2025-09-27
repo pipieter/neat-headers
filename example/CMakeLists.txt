@@ -7,6 +7,8 @@ set(CMAKE_COLOR_DIAGNOSTICS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 
+include_directories(../include)
+
 add_subdirectory(raylib)
 add_executable(allocators_binary_tree allocators_binary_tree.cpp)
 add_executable(ecs_transform          ecs_transform.cpp)

@@ -6,7 +6,7 @@ Single-header Entity-Component-System framework written for C++20. This framewor
 # Example usage
 
 ```C++
-#include "neat_ecs.hpp"
+#include <neat/ecs.hpp>
 
 struct Transform { float x, y, rotation; };
 struct Velocity  { float x, y; };
@@ -74,7 +74,7 @@ The framework exposes two new types: `neat::ecs::entity_id` and `neat::ecs::engi
 An ECS object is created by specifying which components it will hold. For example, consider an ECS with a Position component, a Velocity component and a Render component. The environment is then created as:
 
 ```C++
-#include "neat_ecs.hpp"
+#include <neat/ecs.hpp>
 
 int main() {
     neat::ecs::engine<Position, Velocity, Render> my_ecs;
@@ -85,7 +85,7 @@ int main() {
 It is possible to create an alias to increase readability, if desired.
 
 ```C++
-#include "neat_ecs.hpp"
+#include <neat/ecs.hpp>
 
 using ECS = neat::ecs::engine<Position, Velocity, Render>;
 
@@ -101,7 +101,7 @@ The components allowed in the ECS have the following restrictions:
 - All components must have a default constructor.
 
 ```C++
-#include "neat_ecs.hpp"
+#include <neat/ecs.hpp>
 
 struct NonDefaultConstructor {
     NonDefaultConstructor(int x) {}
@@ -127,7 +127,7 @@ Static asserts have been added to help navigate compilation errors in case any o
 Entities are represented by numerical ids. Entities are handled in the `ecs.entities` field. Entities can be created, removed and queried to see if they exist:
 
 ```C++
-#include "neat_ecs.hpp"
+#include <neat/ecs.hpp>
 
 int main() {
     neat::ecs::engine<...> ecs;
@@ -156,7 +156,7 @@ All existing entity ids can be found using `ecs.entities.all`.
 Components are data objects which represent the state of an entity. An entity can have one or more different components. Components can be added, removed and queried for their existence. Additionally, the first component of a type can be queried, based on the numerical value of the entities.
 
 ```C++
-#include "neat_ecs.hpp"
+#include <neat/ecs.hpp>
 
 int main() {
     neat::ecs::engine<Position, ...> ecs;
@@ -198,7 +198,7 @@ Systems are functions which act on the components entities have. Systems are def
 ```C++
 #include <iostream>
 
-#include "neat_ecs.hpp"
+#include <neat/ecs.hpp>
 
 void move_system(neat::ecs::entity entity, Position* pos, Velocity* vel) {
     std::cout << "Updating movement for entity " << entity << std::endl;
@@ -247,7 +247,7 @@ Creating and deleting components of a type within the system's signature is heav
 It's also possible to iterate over the entities and components directly, without needing to use systems. This can be done using the `ecs.iterate` method.
 
 ```C++
-#include "neat_ecs.hpp"
+#include <neat/ecs.hpp>
 
 int main() {
     neat::ecs::engine<Position, Velocity> ecs;
@@ -263,7 +263,7 @@ int main() {
 The code snippet above will iterate over all entities that have a Position component. It is possible to have give multiple component types. In this case, it will iterate over all entities that have all those types. For example, in the code snippet below, the for loop will iterate over all entities that have a Position component, a Velocity component, and a Rotation component.
 
 ```C++
-#include "neat_ecs.hpp"
+#include <neat/ecs.hpp>
 
 int main() {
     neat::ecs::engine<Position, Velocity, Rotation> ecs;
@@ -281,7 +281,7 @@ int main() {
 The item in each iteration will be a std::tuple containing the entity id and pointers to the requested components. A variation exists named `ecs.iterate_components` where the entity id is not included.
 
 ```C++
-#include "neat_ecs.hpp"
+#include <neat/ecs.hpp>
 
 int main() {
     neat::ecs::engine<Position, Velocity> ecs;
@@ -301,7 +301,7 @@ Similar to systems, it's heavily discouraged to create or delete components of a
 As mentioned before, it's discouraged to create new components while iterating over components of the same type, as the underlying array pointer might change which can invalidate the pointers. One way to mitigate this would be to preallocate the array size if the maximum amount of entities in the ECS would be known. This can be done using `ecs.components.allocate`.
 
 ```C++
-#include "neat_ecs.hpp"
+#include <neat/ecs.hpp>
 
 int main() {
     neat::ecs::engine<Position> ecs;
@@ -318,7 +318,7 @@ Allocate should be called at the start of creation, and will only support entity
 The systems execute function does not allow additional parameters to be given, and will only (optionally) contain the entity id and the requested components. A way to handle this would be to create a single entity with a single component that represents shared data, and then calling a system using only that component.
 
 ```C++
-#include "neat_ecs.hpp"
+#include <neat/ecs.hpp>
 
 struct World;
 struct Transform;

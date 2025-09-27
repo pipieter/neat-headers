@@ -7,11 +7,13 @@ set(CMAKE_COLOR_DIAGNOSTICS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(tests_allocators tests_allocators.cpp)
-add_executable(tests_ecs        tests_ecs.cpp)
-add_executable(tests_math       tests_math.cpp)
-add_executable(tests_test       tests_test.cpp)
-add_executable(tests_types      tests_types.cpp)
+include_directories(../include)
+
+add_executable(allocators allocators.cpp)
+add_executable(ecs        ecs.cpp)
+add_executable(math       math.cpp)
+add_executable(test       test.cpp)
+add_executable(types      types.cpp)
 
 add_compile_options(PUBLIC -g
     -Wall -Wextra -pedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy 

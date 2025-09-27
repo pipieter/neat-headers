@@ -2,8 +2,7 @@
 #include <rlgl.h>
 
 #include <cmath>
-
-#include "../neat_ecs.hpp"
+#include <neat/ecs.hpp>
 
 struct World;
 struct Cube;
