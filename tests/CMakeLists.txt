@@ -14,6 +14,9 @@ add_executable(ecs        ecs.cpp)
 add_executable(math       math.cpp)
 add_executable(test       test.cpp)
 add_executable(types      types.cpp)
+add_executable(lua        lua.cpp)
+
+target_link_libraries(lua -llua5.4) # TODO FindLua
 
 add_compile_options(PUBLIC -g
     -Wall -Wextra -pedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy 
