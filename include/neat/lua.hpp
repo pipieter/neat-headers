@@ -1,5 +1,4 @@
 // TODO add  luaN_registerfunction()
-// TODO error handling
 
 /**
  @file      neat/lua.hpp
@@ -91,12 +90,15 @@ template <typename T> void luaN_setglobal(lua_State* L, T value, const char* nam
 // [-0, +0, e] Get a global value. Supports nested names.
 template <typename T> T luaN_getglobal(lua_State* L, const char* name);
 
-// [-0, +1, e] Push a global onto the top of the stack. Supports nested names.
-void luaN_pushglobal(lua_State* L, const char* name);
+// [-0, +1, e] Push a global onto the top of the stack. Supports nested names. Pushes nil if the global could not be found.
+inline void luaN_pushglobal(lua_State* L, const char* name);
 
 // [-0, +0, e] Call a Lua function with arguments and returns the result (or returns void). The arguments are in
 // the same order as the lua function. Supports nested names.
 template <typename T, typename... Args> T luaN_call(lua_State* L, const char* name, Args const&... args);
+
+// [-0, +0, e] Register a C function. Equivalent to lua_registerfunction, except it supports nested objects.
+inline void luaN_registerfunction(lua_State* L, const char* name, lua_CFunction function);
 
 // [-0, +0, -] Get a value in the stack. Equivalent to lua_toXXX (e.g. luaN_to<const char*> is equivalent to luaN_tostring).
 template <typename T> T luaN_to(lua_State* L, int index);
@@ -138,9 +140,16 @@ void luaN_setglobal(lua_State* L, T value, const char* name) {
         lua_setglobal(L, name);
     } else {
         __luaN_pushglobaltable(name, L, tables, true);  // +1, set global table
-        luaN_push(L, value);                            // +1, push value
-        lua_setfield(L, -2, variable.c_str());          // -1, set global field
-        lua_pop(L, 1);                                  // -1, pop the global table
+        if (lua_isnil(L, -1)) {
+            std::stringstream stream;
+            stream << "Could not set global '" << name << "'. Could not create table!";
+            throw std::runtime_error(stream.str());
+            lua_pop(L, 1);
+        } else {
+            luaN_push(L, value);                    // +1, push value
+            lua_setfield(L, -2, variable.c_str());  // -1, set global field
+            lua_pop(L, 1);                          // -1, pop the global table
+        }
     }
 }
 
@@ -310,8 +319,14 @@ inline void neat::luaN_pushglobal(lua_State* L, const char* name) {
         lua_getglobal(L, global.c_str());
     } else {
         __luaN_pushglobaltable(name, L, tables, false);  // +1, push global table
-        lua_getfield(L, -1, global.c_str());             // +1, push the field from the global
-        lua_remove(L, -2);                               // -1, pop the global table from the stack
+        if (lua_isnil(L, -1)) {
+            std::stringstream stream;
+            stream << "Could not push global '" << name << "'. Could not access nested table!";
+            // nil is already pushed
+        } else {
+            lua_getfield(L, -1, global.c_str());  // +1, push the field from the global
+            lua_remove(L, -2);                    // -1, pop the global table from the stack
+        }
     }
 }
 
