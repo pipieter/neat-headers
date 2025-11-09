@@ -181,6 +181,29 @@ void test_push_and_pop_array(void) {
     lua_close(L);
 }
 
+static int my_lua_add(lua_State* L) {
+    int a      = lua_tointeger(L, -2);
+    int b      = lua_tointeger(L, -1);
+    int result = a + b;
+    lua_pushinteger(L, result);
+
+    return 1;
+}
+
+void test_register_function(void) {
+    lua_State* L     = create_lua_test_environment();
+    int        stack = lua_gettop(L);
+
+    luaN_registerfunction(L, "MyLua.Add", my_lua_add);
+    NEAT_TEST_ASSERT_EQ(lua_gettop(L), stack);
+
+    int result = luaN_call<int, int, int>(L, "MyLua.Add", 5, 6);
+    NEAT_TEST_ASSERT_EQ(result, 11);
+    NEAT_TEST_ASSERT_EQ(lua_gettop(L), stack);
+
+    lua_close(L);
+}
+
 int main() {
     NEAT_TEST_RUN(test_set_and_get_global);
     NEAT_TEST_RUN(test_set_and_get_nested_global);
@@ -188,6 +211,7 @@ int main() {
     NEAT_TEST_RUN(test_push_and_poptop);
     NEAT_TEST_RUN(test_push_many);
     NEAT_TEST_RUN(test_push_and_pop_array);
+    NEAT_TEST_RUN(test_register_function);
 
     NEAT_TEST_PRINT_STATS();
 }

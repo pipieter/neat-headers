@@ -1,5 +1,3 @@
-// TODO add  luaN_registerfunction()
-
 /**
  @file      neat/lua.hpp
  @author    Pim Pieters
@@ -141,10 +139,10 @@ void luaN_setglobal(lua_State* L, T value, const char* name) {
     } else {
         __luaN_pushglobaltable(name, L, tables, true);  // +1, set global table
         if (lua_isnil(L, -1)) {
+            lua_pop(L, 1);
             std::stringstream stream;
             stream << "Could not set global '" << name << "'. Could not create table!";
             throw std::runtime_error(stream.str());
-            lua_pop(L, 1);
         } else {
             luaN_push(L, value);                    // +1, push value
             lua_setfield(L, -2, variable.c_str());  // -1, set global field
@@ -224,6 +222,28 @@ template <typename... T> size_t luaN_pushmany(lua_State* L, T... values) {
 #ifdef NEAT_LUA_IMPLEMENTATION
 
 #pragma region Implementations
+
+// neat::luaN_registerfunction implementation
+
+inline void neat::luaN_registerfunction(lua_State* L, const char* name, lua_CFunction function) {
+    auto [tables, funcname] = __luaN_splitnestedname(name);
+    if (tables.empty()) {
+        lua_register(L, name, function);
+    } else {
+        __luaN_pushglobaltable(name, L, tables, true);  // +1
+        if (lua_isnil(L, -1)) {
+            lua_pop(L, 1);
+            std::stringstream stream;
+            stream << "Could not register function '" << name << "'. Could not create table!";
+            throw std::runtime_error(stream.str());
+        } else {
+            lua_pushstring(L, funcname.c_str());  // +1, push key
+            lua_pushcfunction(L, function);       // +1, push value
+            lua_settable(L, -3);                  // -2, set table value
+            lua_pop(L, 1);                        // -1, pop table
+        }
+    }
+}
 
 // neat::luaN_to implementations
 
@@ -320,9 +340,9 @@ inline void neat::luaN_pushglobal(lua_State* L, const char* name) {
     } else {
         __luaN_pushglobaltable(name, L, tables, false);  // +1, push global table
         if (lua_isnil(L, -1)) {
+            // nil is already pushed
             std::stringstream stream;
             stream << "Could not push global '" << name << "'. Could not access nested table!";
-            // nil is already pushed
         } else {
             lua_getfield(L, -1, global.c_str());  // +1, push the field from the global
             lua_remove(L, -2);                    // -1, pop the global table from the stack
