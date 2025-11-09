@@ -438,7 +438,7 @@ inline void neat::__luaN_pushglobaltable(const char* fullname, lua_State* L, con
     }
 }
 
-#pragma endregionImplementations
+#pragma endregion Implementations
 
 #endif
 
