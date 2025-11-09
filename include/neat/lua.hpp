@@ -77,29 +77,29 @@
 
 namespace neat {
 
-// [+0, +0, e] Set a global value. Supports nested names.
+// [-0, +0, e] Set a global value. Supports nested names.
 template <typename T> void luaN_setglobal(lua_State* L, T value, const char* name);
 
-// [+0, +0, e] Get a global value. Supports nested names.
+// [-0, +0, e] Get a global value. Supports nested names.
 template <typename T> T luaN_getglobal(lua_State* L, const char* name);
 
-// [+0, +1, e] Push a global onto the top of the stack. Supports nested names.
+// [-0, +1, e] Push a global onto the top of the stack. Supports nested names.
 void luaN_pushglobal(lua_State* L, const char* name);
 
-// [+0, +0, e] Call a Lua function with arguments and returns the result (or returns void). The arguments are in
+// [-0, +0, e] Call a Lua function with arguments and returns the result (or returns void). The arguments are in
 // the same order as the lua function. Supports nested names.
 template <typename T, typename... Args> T luaN_call(lua_State* L, const char* name, Args const&... args);
 
-// [+0, +0, -] Get a value in the stack. Equivalent to lua_toXXX (e.g. luaN_to<const char*> is equivalent to luaN_tostring).
+// [-0, +0, -] Get a value in the stack. Equivalent to lua_toXXX (e.g. luaN_to<const char*> is equivalent to luaN_tostring).
 template <typename T> T luaN_to(lua_State* L, int index);
 
-// [+0, +0, -] Check if a value at an index is a type. Equivalent to lua_isXXX (e.g. luaN_is<const char*> is equivalent to lua_isstring).
+// [-0, +0, -] Check if a value at an index is a type. Equivalent to lua_isXXX (e.g. luaN_is<const char*> is equivalent to lua_isstring).
 template <typename T> bool luaN_is(lua_State* L, int index);
 
-// [+0, +1, -] Push a value onto the stack. Equivalent to lua_pushXXX (e.g. luaN_push<const char*> is equivalent to lua_pushstring).
+// [-0, +1, -] Push a value onto the stack. Equivalent to lua_pushXXX (e.g. luaN_push<const char*> is equivalent to lua_pushstring).
 template <typename T> void luaN_push(lua_State* L, T value);
 
-// [+0, +N, -] Push multiple values onto the stack and returns the amount of values pushed. Uses luaN_push internally.
+// [-0, +N, -] Push multiple values onto the stack and returns the amount of values pushed. Uses luaN_push internally.
 template <typename... T> size_t luaN_pushmany(lua_State* L, T... values);
 
 // [-1, +0, e] Pop the top value of the stack and returns its value, or void if the value is to be discarded.
@@ -108,7 +108,7 @@ template <typename T> T luaN_poptop(lua_State* L);
 // Split a nested string into a vector of table names and the name of the variable.
 inline std::tuple<std::vector<std::string>, std::string> __luaN_splitnestedname(const char* str);
 
-// [+0, +1, e] Create or retrieve a global nested table and pushes it into the top of the stack. On failure, nil is pushed.
+// [-0, +1, e] Create or retrieve a global nested table and pushes it into the top of the stack. On failure, nil is pushed.
 inline void __luaN_pushglobaltable(const char* fullname, lua_State* L, const std::vector<std::string>& names, bool create_if_not_exist);
 
 #pragma region Template implementation
