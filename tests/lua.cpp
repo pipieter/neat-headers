@@ -154,12 +154,40 @@ void test_push_many(void) {
     lua_close(L);
 }
 
+void test_push_and_pop_array(void) {
+    lua_State* L     = create_lua_test_environment();
+    int        stack = lua_gettop(L);
+
+    int array[5] = {1, 2, 3, 4, 5};
+    int dest1[5] = {0, 0, 0, 0, 0};
+    int dest2[5] = {0, 0, 0, 0, 0};
+
+    // test luaN_pusharray
+    luaN_pusharray<int>(L, array, 5);
+    NEAT_TEST_ASSERT_EQ(lua_gettop(L), stack + 1);
+
+    // test luaN_toarray
+    luaN_toarray<int>(L, -1, dest1, 5);
+    for (int i = 0; i < 5; i++)
+        NEAT_TEST_ASSERT_EQ(array[i], dest1[i]);
+    NEAT_TEST_ASSERT_EQ(lua_gettop(L), stack + 1);
+
+    // test luaN_poptoparray
+    luaN_poptoparray<int>(L, dest2, 5);
+    for (int i = 0; i < 5; i++)
+        NEAT_TEST_ASSERT_EQ(array[i], dest2[i]);
+    NEAT_TEST_ASSERT_EQ(lua_gettop(L), stack);
+
+    lua_close(L);
+}
+
 int main() {
     NEAT_TEST_RUN(test_set_and_get_global);
     NEAT_TEST_RUN(test_set_and_get_nested_global);
     NEAT_TEST_RUN(test_call_function);
     NEAT_TEST_RUN(test_push_and_poptop);
     NEAT_TEST_RUN(test_push_many);
+    NEAT_TEST_RUN(test_push_and_pop_array);
 
     NEAT_TEST_PRINT_STATS();
 }

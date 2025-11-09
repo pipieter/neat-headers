@@ -1,4 +1,3 @@
-// TODO push/pop array
 // TODO add  luaN_registerfunction()
 // TODO error handling
 
@@ -43,22 +42,31 @@
 
  If during the execution of these functions an error occurs (e.g. because the stack was empty when calling luaN_poptop),
  an std::runtime_error will be thrown with an appropriate message. In case these errors are to be expected, these should
- be handled manually.
+ be handled manually. Normal Lua errors, such as calling lua_gettable with an incorrect stack configuration, will still
+ result in the expected Lua errors.
 
  The names of global values and global functions used support nesting by using dots. For example, searching for the
  global "Foo.Bar" will search for the global table Foo and then return its Baz field. These tables can be nested
  themselves, and searches like "Foo.Bar.Baz.Quux" are also valid.
 
  The following functions are defined, where T represents a template value as defined above:
- - void   luaN_setglobal(lua_State* L, T value, const char* name)
- - T      luaN_getglobal(lua_State* L, const char* name)
- - void   luaN_pushglobal(lua_State* L, const char* name)
- - T      luaN_call(lua_State* L, const char* name, Args... args)
- - T      luaN_to(lua_State* L, int index)
- - bool   luaN_is(lua_State* L, int index)
- - void   luaN_push(lua_State* L, T value)
- - size_t luaN_pushmany(lua_State* L, T... values)
- - T      luaN_poptop(lua_State* L)
+    // Global functions
+    - void luaN_setglobal(lua_State* L, T value, const char* name)
+    - T    luaN_getglobal(lua_State* L, const char* name)
+    - void luaN_pushglobal(lua_State* L, const char* name)
+    - T    luaN_call(lua_State* L, const char* name, Args... args)
+
+    // Stack functions
+    - T      luaN_to(lua_State* L, int index)
+    - bool   luaN_is(lua_State* L, int index)
+    - void   luaN_push(lua_State* L, T value)
+    - T      luaN_poptop(lua_State* L)
+    - size_t luaN_pushmany(lua_State* L, T... values)
+
+    // Array functions
+    - void luaN_toarray(lua_State* L, int index, T* values, size_t count)
+    - void luaN_pusharray(lua_State* L, T* values, size_t count)
+    - void luaN_poptoparray(lua_State* L, T* values, size_t count)
 
  */
 
@@ -93,6 +101,9 @@ template <typename T, typename... Args> T luaN_call(lua_State* L, const char* na
 // [-0, +0, -] Get a value in the stack. Equivalent to lua_toXXX (e.g. luaN_to<const char*> is equivalent to luaN_tostring).
 template <typename T> T luaN_to(lua_State* L, int index);
 
+// [-0, +0, -] Get an array of values from the stack. Destination pointer and count have to be provided manually. Uses luaN_to internally.
+template <typename T> void luaN_toarray(lua_State* L, int index, T* destination, size_t count);
+
 // [-0, +0, -] Check if a value at an index is a type. Equivalent to lua_isXXX (e.g. luaN_is<const char*> is equivalent to lua_isstring).
 template <typename T> bool luaN_is(lua_State* L, int index);
 
@@ -104,6 +115,12 @@ template <typename... T> size_t luaN_pushmany(lua_State* L, T... values);
 
 // [-1, +0, e] Pop the top value of the stack and returns its value, or void if the value is to be discarded.
 template <typename T> T luaN_poptop(lua_State* L);
+
+// [-0, +1, e] Push an array of values into a new table onto the stack.
+template <typename T> void luaN_pusharray(lua_State* L, T* values, size_t count);
+
+// [-1, +0, e] Pop an array of values from the stack.
+template <typename T> void luaN_poptoparray(lua_State* L, T* destination, size_t count);
 
 // Split a nested string into a vector of table names and the name of the variable.
 inline std::tuple<std::vector<std::string>, std::string> __luaN_splitnestedname(const char* str);
@@ -141,17 +158,42 @@ template <typename... Args> void luaN_call(lua_State* L, const char* name, Args 
 }
 
 template <typename T, typename... Args> T luaN_call(lua_State* L, const char* name, Args const&... args) {
-    // TODO reduce code duplication
     luaN_pushglobal(L, name);
     int arg_count = luaN_pushmany(L, args...);
     lua_call(L, arg_count, 1);
     return luaN_poptop<T>(L);
 }
 
+template <typename T> void luaN_toarray(lua_State* L, int index, T* destination, size_t count) {
+    for (int i = 0; i < (int)count; i++) {
+        lua_pushinteger(L, i + 1);  // +1, push index
+        if (index < 0) {
+            lua_gettable(L, index - 1);  // +0, note: -1 because we already used negative indices, and a value was pushed
+        } else {
+            lua_gettable(L, index);  // +0
+        }
+        destination[i] = luaN_poptop<T>(L);
+    }
+}
+
+template <typename T> void luaN_pusharray(lua_State* L, T* values, size_t count) {
+    lua_newtable(L);
+    for (int i = 0; i < (int)count; i++) {
+        lua_pushinteger(L, i + 1);   // +1, push key
+        luaN_push<T>(L, values[i]);  // +1, push value
+        lua_settable(L, -3);         // -2, set the value
+    }
+}
+
 template <typename T> T luaN_poptop(lua_State* L) {
     T value = luaN_to<T>(L, -1);
     lua_pop(L, 1);
     return value;
+}
+
+template <typename T> void luaN_poptoparray(lua_State* L, T* destination, size_t count) {
+    luaN_toarray(L, -1, destination, count);
+    lua_pop(L, 1);
 }
 
 template <typename... T> size_t luaN_pushmany(lua_State* L, T... values) {
