@@ -135,11 +135,21 @@ void test_call_function(void) {
     NEAT_TEST_ASSERT_EQ(lua_gettop(L), stack);
 }
 
+void test_push_many(void) {
+    lua_State* L     = create_lua_test_environment();
+    int        stack = lua_gettop(L);
+
+    int count = (int)luaN_pushmany<int, const char*, float, void*>(L, 3, "a", 3.0, NULL);
+    NEAT_TEST_ASSERT_EQ(count, 4);
+    NEAT_TEST_ASSERT_EQ(lua_gettop(L), stack + count);
+}
+
 int main() {
     NEAT_TEST_RUN(test_set_and_get_global);
     NEAT_TEST_RUN(test_set_and_get_nested_global);
     NEAT_TEST_RUN(test_call_function);
     NEAT_TEST_RUN(test_push_and_poptop);
+    NEAT_TEST_RUN(test_push_many);
 
     NEAT_TEST_PRINT_STATS();
 }

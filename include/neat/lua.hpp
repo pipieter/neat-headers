@@ -1,4 +1,3 @@
-// TODO luaN_pushmultiple() to reduce code duplication in luaN_call
 // TODO push/pop array
 // TODO add  luaN_registerfunction()
 // TODO error handling
@@ -51,14 +50,15 @@
  themselves, and searches like "Foo.Bar.Baz.Quux" are also valid.
 
  The following functions are defined, where T represents a template value as defined above:
- - void luaN_setglobal(lua_State* L, T value, const char* name)
- - T    luaN_getglobal(lua_State* L, const char* name)
- - void luaN_pushglobal(lua_State* L, const char* name)
- - T    luaN_call(lua_State* L, const char* name, Args... args)
- - T    luaN_to(lua_State* L, int index)
- - bool luaN_is(lua_State* L, int index)
- - void luaN_push(lua_State* L, T value)
- - T    luaN_poptop(lua_State* L)
+ - void   luaN_setglobal(lua_State* L, T value, const char* name)
+ - T      luaN_getglobal(lua_State* L, const char* name)
+ - void   luaN_pushglobal(lua_State* L, const char* name)
+ - T      luaN_call(lua_State* L, const char* name, Args... args)
+ - T      luaN_to(lua_State* L, int index)
+ - bool   luaN_is(lua_State* L, int index)
+ - void   luaN_push(lua_State* L, T value)
+ - size_t luaN_pushmany(lua_State* L, T... values)
+ - T      luaN_poptop(lua_State* L)
 
  */
 
@@ -99,6 +99,9 @@ template <typename T> bool luaN_is(lua_State* L, int index);
 // [+0, +1, -] Push a value onto the stack. Equivalent to lua_pushXXX (e.g. luaN_push<const char*> is equivalent to lua_pushstring).
 template <typename T> void luaN_push(lua_State* L, T value);
 
+// [+0, +N, -] Push multiple values onto the stack and returns the amount of values pushed. Uses luaN_push internally.
+template <typename... T> size_t luaN_pushmany(lua_State* L, T... values);
+
 // [-1, +0, e] Pop the top value of the stack and returns its value, or void if the value is to be discarded.
 template <typename T> T luaN_poptop(lua_State* L);
 
@@ -132,13 +135,7 @@ template <typename T> T luaN_getglobal(lua_State* L, const char* name) {
 /* Specific implementation for luaN_call with no return*/
 template <typename... Args> void luaN_call(lua_State* L, const char* name, Args const&... args) {
     luaN_pushglobal(L, name);
-    int arg_count = 0;
-    ([&] {
-        luaN_push(L, args);
-        arg_count++;
-    }(),
-     ...);
-
+    int arg_count = luaN_pushmany(L, args...);
     lua_call(L, arg_count, 0);
     return;
 }
@@ -146,13 +143,7 @@ template <typename... Args> void luaN_call(lua_State* L, const char* name, Args 
 template <typename T, typename... Args> T luaN_call(lua_State* L, const char* name, Args const&... args) {
     // TODO reduce code duplication
     luaN_pushglobal(L, name);
-    int arg_count = 0;
-    ([&] {
-        luaN_push(L, args);
-        arg_count++;
-    }(),
-     ...);
-
+    int arg_count = luaN_pushmany(L, args...);
     lua_call(L, arg_count, 1);
     return luaN_poptop<T>(L);
 }
@@ -161,6 +152,16 @@ template <typename T> T luaN_poptop(lua_State* L) {
     T value = luaN_to<T>(L, -1);
     lua_pop(L, 1);
     return value;
+}
+
+template <typename... T> size_t luaN_pushmany(lua_State* L, T... values) {
+    size_t count = 0;
+    ([&] {
+        luaN_push(L, values);
+        count++;
+    }(),
+     ...);
+    return count;
 }
 
 #pragma endregion
