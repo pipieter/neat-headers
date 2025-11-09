@@ -2,7 +2,7 @@
  @file      neat/lua.hpp
  @author    Pim Pieters
  @brief     Collection of helper functions for Lua in C++. Compatible with Lua 5.4.
- @copyright Copyright (c) 2025
+ @copyright See bottom of file
 
  IMPORTANT: Add the following line to one C++ source file before the include to create the implementation:
     #define NEAT_LUA_IMPLEMENTATION
@@ -52,6 +52,7 @@
     - T    luaN_getglobal(lua_State* L, const char* name)
     - void luaN_pushglobal(lua_State* L, const char* name)
     - T    luaN_call(lua_State* L, const char* name, Args... args)
+    - void luaN_registerfunction(lua_State* L, const char* name, lua_CFunction function)
 
     // Stack functions
     - T      luaN_to(lua_State* L, int index)
