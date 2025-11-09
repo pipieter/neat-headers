@@ -44,6 +44,8 @@ void test_set_and_get_global(void) {
 
     NEAT_TEST_ASSERT_EQ(luaN_getglobal<int>(L, "my_value"), 333);
     NEAT_TEST_ASSERT_EQ(lua_gettop(L), stack);
+
+    lua_close(L);
 }
 
 void test_set_and_get_nested_global(void) {
@@ -64,6 +66,8 @@ void test_set_and_get_nested_global(void) {
     } catch (...) {
         NEAT_TEST_ASSERT(false);
     }
+
+    lua_close(L);
 }
 
 void test_push_and_poptop(void) {
@@ -116,6 +120,8 @@ void test_push_and_poptop(void) {
     luaN_push(L, 3);
     luaN_poptop<void>(L);
     NEAT_TEST_ASSERT_EQ(lua_gettop(L), stack);
+
+    lua_close(L);
 }
 
 void test_call_function(void) {
@@ -133,6 +139,8 @@ void test_call_function(void) {
     int dot_result = luaN_call<int, float, float, double, double, int>(L, "dot_product_and_add", 1.0f, 2.0f, 3.0, 9.0, 100);
     NEAT_TEST_ASSERT_EQ(dot_result, 21 + 100);
     NEAT_TEST_ASSERT_EQ(lua_gettop(L), stack);
+
+    lua_close(L);
 }
 
 void test_push_many(void) {
@@ -142,6 +150,8 @@ void test_push_many(void) {
     int count = (int)luaN_pushmany<int, const char*, float, void*>(L, 3, "a", 3.0, NULL);
     NEAT_TEST_ASSERT_EQ(count, 4);
     NEAT_TEST_ASSERT_EQ(lua_gettop(L), stack + count);
+
+    lua_close(L);
 }
 
 int main() {
